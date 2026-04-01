@@ -113,6 +113,26 @@ def test_archive_preserves_all_fields(local_archive):
     assert loaded["audio_files"] == ["/a.mp3"]
 
 
+def test_update_audio_local(local_archive):
+    """update_audio() updates audio_files for an existing entry."""
+    import archive
+
+    archive.save(SAMPLE_ACHIEVEMENT, audio_files=[])
+    archive.update_audio(1, ["/output/opener.wav", "/output/reward.wav"])
+    loaded = archive.get(1)
+    assert loaded["audio_files"] == ["/output/opener.wav", "/output/reward.wav"]
+
+
+def test_update_audio_replaces(local_archive):
+    """update_audio() replaces existing audio_files, not appends."""
+    import archive
+
+    archive.save(SAMPLE_ACHIEVEMENT, audio_files=["/old.wav"])
+    archive.update_audio(1, ["/new.wav"])
+    loaded = archive.get(1)
+    assert loaded["audio_files"] == ["/new.wav"]
+
+
 # ---------------------------------------------------------------------------
 # Cloud mode (DynamoDB) tests
 # ---------------------------------------------------------------------------
@@ -206,5 +226,15 @@ def test_cloud_preserves_audio_files(cloud_archive):
     import archive
 
     archive.save(SAMPLE_ACHIEVEMENT, audio_files=["audio/opener.wav", "audio/reward.wav"])
+    loaded = archive.get(1)
+    assert loaded["audio_files"] == ["audio/opener.wav", "audio/reward.wav"]
+
+
+def test_cloud_update_audio(cloud_archive):
+    """update_audio() updates audio_files in DynamoDB."""
+    import archive
+
+    archive.save(SAMPLE_ACHIEVEMENT, audio_files=[])
+    archive.update_audio(1, ["audio/opener.wav", "audio/reward.wav"])
     loaded = archive.get(1)
     assert loaded["audio_files"] == ["audio/opener.wav", "audio/reward.wav"]
