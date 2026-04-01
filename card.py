@@ -1,11 +1,11 @@
 """
-Shareable achievement card — renders a PNG image of an achievement.
+Shareable achievement card — renders a high-DPI PNG image of an achievement.
 Dark theme with gold accents, matching the web UI aesthetic.
+Rendered at 3x scale for sharp text on retina/high-DPI displays.
 """
 
 import textwrap
 from io import BytesIO
-from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -18,13 +18,22 @@ DIM_TEXT = (136, 136, 136)     # #888888
 BORDER_COLOR = (240, 192, 64)  # #f0c040
 DIVIDER_COLOR = (51, 51, 51)   # #333333
 
-CARD_WIDTH = 800
-CARD_PADDING = 40
+# Render at 3x for crisp text — final image is 2400px wide
+SCALE = 3
+CARD_WIDTH = 800 * SCALE
+CARD_PADDING = 40 * SCALE
 INNER_WIDTH = CARD_WIDTH - (CARD_PADDING * 2)
+BORDER = 3 * SCALE
+
+
+def _s(val: int) -> int:
+    """Scale a value by the render multiplier."""
+    return val * SCALE
 
 
 def _get_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
-    """Get a monospace font, falling back to default if not available."""
+    """Get a monospace font at scaled size, falling back to default."""
+    scaled = size * SCALE
     font_names = [
         "Courier New Bold" if bold else "Courier New",
         "DejaVu Sans Mono Bold" if bold else "DejaVu Sans Mono",
@@ -32,15 +41,15 @@ def _get_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
     ]
     for name in font_names:
         try:
-            return ImageFont.truetype(name, size)
+            return ImageFont.truetype(name, scaled)
         except OSError:
             continue
-    return ImageFont.load_default(size)
+    return ImageFont.load_default(scaled)
 
 
 def render_card(achievement: dict) -> bytes:
     """
-    Render an achievement as a shareable PNG card.
+    Render an achievement as a shareable high-DPI PNG card.
     Returns PNG bytes.
     """
     title = achievement.get("title", "Unknown Achievement")
@@ -54,7 +63,7 @@ def render_card(achievement: dict) -> bytes:
     if desc_clean.lower().endswith("your reward!"):
         desc_clean = desc_clean[: -len("your reward!")].strip()
 
-    # Fonts
+    # Fonts (base sizes, scaled internally by _get_font)
     font_header = _get_font(14, bold=True)
     font_title = _get_font(28, bold=True)
     font_body = _get_font(18)
@@ -66,67 +75,67 @@ def render_card(achievement: dict) -> bytes:
     desc_lines = textwrap.wrap(desc_clean, width=52)
     reward_lines = textwrap.wrap(reward, width=48)
 
-    # Calculate card height dynamically
-    line_height_body = 26
-    line_height_reward = 26
+    # Calculate card height dynamically (all values scaled)
+    line_height_body = _s(26)
+    line_height_reward = _s(26)
     card_height = (
-        CARD_PADDING          # top padding
-        + 30                  # header badge
-        + 20                  # gap
-        + 36                  # title
-        + 20                  # gap
-        + len(desc_lines) * line_height_body  # description
-        + 24                  # gap
-        + 2                   # divider
-        + 20                  # gap
-        + len(reward_lines) * line_height_reward  # reward
-        + 30                  # gap
-        + 16                  # watermark
-        + CARD_PADDING        # bottom padding
+        CARD_PADDING
+        + _s(30)                                    # header badge
+        + _s(20)                                    # gap
+        + _s(36)                                    # title
+        + _s(20)                                    # gap
+        + len(desc_lines) * line_height_body        # description
+        + _s(24)                                    # gap
+        + _s(2)                                     # divider
+        + _s(20)                                    # gap
+        + _s(24)                                    # REWARD label
+        + len(reward_lines) * line_height_reward    # reward
+        + _s(30)                                    # gap
+        + _s(16)                                    # watermark
+        + CARD_PADDING
     )
 
-    # Create image with border
-    border = 3
-    img_width = CARD_WIDTH + border * 2
-    img_height = card_height + border * 2
+    # Create image with gold border
+    img_width = CARD_WIDTH + BORDER * 2
+    img_height = card_height + BORDER * 2
     img = Image.new("RGB", (img_width, img_height), BORDER_COLOR)
     card = Image.new("RGB", (CARD_WIDTH, card_height), CARD_BG)
-    img.paste(card, (border, border))
+    img.paste(card, (BORDER, BORDER))
 
     draw = ImageDraw.Draw(img)
-    x = CARD_PADDING + border
-    y = CARD_PADDING + border
+    x = CARD_PADDING + BORDER
+    y = CARD_PADDING + BORDER
 
     # Header badge
     badge_text = "ACHIEVEMENT UNLOCKED"
     bbox = draw.textbbox((0, 0), badge_text, font=font_header)
-    badge_w = bbox[2] - bbox[0] + 16
-    badge_h = bbox[3] - bbox[1] + 10
+    badge_w = bbox[2] - bbox[0] + _s(16)
+    badge_h = bbox[3] - bbox[1] + _s(10)
     draw.rectangle([x, y, x + badge_w, y + badge_h], fill=GOLD)
-    draw.text((x + 8, y + 4), badge_text, fill=BG_COLOR, font=font_header)
-    y += badge_h + 20
+    draw.text((x + _s(8), y + _s(4)), badge_text, fill=BG_COLOR, font=font_header)
+    y += badge_h + _s(20)
 
     # Title with star
     draw.text((x, y), f"\u2605  {title}", fill=GOLD, font=font_title)
-    y += 36 + 20
+    y += _s(36) + _s(20)
 
     # Description
     for line in desc_lines:
         draw.text((x, y), line, fill=TEXT_COLOR, font=font_body)
         y += line_height_body
-    y += 24
+    y += _s(24)
 
     # Divider
-    draw.line([(x, y), (x + INNER_WIDTH, y)], fill=DIVIDER_COLOR, width=2)
-    y += 2 + 20
+    draw.line([(x, y), (x + INNER_WIDTH, y)], fill=DIVIDER_COLOR, width=_s(2))
+    y += _s(2) + _s(20)
 
     # Reward
     draw.text((x, y), "REWARD", fill=GOLD, font=font_label)
-    y += 24
+    y += _s(24)
     for line in reward_lines:
-        draw.text((x + 4, y), line, fill=TEXT_COLOR, font=font_reward)
+        draw.text((x + _s(4), y), line, fill=TEXT_COLOR, font=font_reward)
         y += line_height_reward
-    y += 14
+    y += _s(14)
 
     # Watermark
     draw.text(
@@ -138,5 +147,5 @@ def render_card(achievement: dict) -> bytes:
 
     # Export PNG
     buf = BytesIO()
-    img.save(buf, format="PNG")
+    img.save(buf, format="PNG", dpi=(216, 216))  # 72 * 3 = 216 DPI
     return buf.getvalue()
