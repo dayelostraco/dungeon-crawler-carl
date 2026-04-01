@@ -29,6 +29,10 @@ finetune_output/
 # macOS
 .DS_Store
 
+# CDK
+cdk/cdk.out/
+cdk/node_modules/
+
 # Editor
 .vscode/
 .idea/

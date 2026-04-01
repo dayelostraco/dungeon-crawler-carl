@@ -223,6 +223,49 @@ Use `--list` to browse history and `--replay N` to replay any past achievement.
 | `ELEVENLABS_VOICE_ID` | No | built-in default | ElevenLabs voice ID to use |
 | `MODEL` | No | `claude-opus-4-5` | Claude model to use |
 | `MAX_TOKENS` | No | `400` | Max tokens for generation |
+| `OUTPUT_DIR` | No | `./output` | Audio output directory (set for EFS in container) |
+| `ARCHIVE_FILE` | No | `./achievements.json` | Archive file path (set for EFS in container) |
+
+---
+
+## AWS Deployment
+
+The app deploys to ECS Fargate behind an ALB using AWS CDK (Python).
+
+### Architecture
+
+```
+Internet → ALB (HTTP) → ECS Fargate (0.5 vCPU, 1GB) → Container (uvicorn :8000)
+                                                       ↳ EFS (/app/data — audio cache + archive)
+                                                       ↳ Secrets Manager (API keys)
+```
+
+### Prerequisites
+
+1. AWS account with CDK bootstrapped
+2. Secrets created in Secrets Manager:
+   - `achievement-intercom/anthropic-api-key`
+   - `achievement-intercom/elevenlabs-api-key`
+   - `achievement-intercom/elevenlabs-voice-id`
+
+### Deploy
+
+```bash
+cd cdk
+pip install -r requirements.txt
+cdk bootstrap   # first time only
+cdk deploy
+```
+
+CDK handles everything: builds the Docker image, pushes to ECR, creates VPC/ALB/EFS/ECS, and deploys.
+
+### Local Docker test
+
+```bash
+docker build -t achievement-intercom .
+docker run -p 8000:8000 --env-file .env achievement-intercom
+# Open http://localhost:8000
+```
 
 ---
 

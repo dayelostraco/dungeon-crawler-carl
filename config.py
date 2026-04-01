@@ -12,8 +12,8 @@ MAX_TOKENS: int = int(os.getenv("MAX_TOKENS", "400"))
 
 REFERENCE_AUDIO_DIR: Path = PROJECT_ROOT / "reference_audio"
 TRANSCRIPTS_DIR: Path = PROJECT_ROOT / "transcripts"
-OUTPUT_DIR: Path = PROJECT_ROOT / "output"
-ARCHIVE_FILE: Path = PROJECT_ROOT / "achievements.json"
+OUTPUT_DIR: Path = Path(os.getenv("OUTPUT_DIR", str(PROJECT_ROOT / "output")))
+ARCHIVE_FILE: Path = Path(os.getenv("ARCHIVE_FILE", str(PROJECT_ROOT / "achievements.json")))
 
 OUTPUT_DIR.mkdir(exist_ok=True)
 REFERENCE_AUDIO_DIR.mkdir(exist_ok=True)

@@ -1,0 +1,11 @@
+anthropic==0.87.0
+python-dotenv==1.2.2
+elevenlabs==2.41.0
+pygame==2.6.1
+pedalboard==0.9.22
+numpy==1.26.4
+soundfile==0.13.1
+librosa==0.11.0
+fastapi==0.135.3
+uvicorn[standard]==0.42.0
+pydantic==2.12.5

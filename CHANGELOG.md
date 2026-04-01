@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2026-04-01
+
+### Added — AWS Deployment
+- `Dockerfile` — production container based on python:3.11-slim with libsndfile
+- `requirements.txt` — pinned production dependencies
+- `cdk/` — AWS CDK (Python) infrastructure stack:
+  - VPC with 2 AZs, public + private subnets, NAT gateway
+  - EFS filesystem with access point for persistent audio cache and archive
+  - ECS Fargate service (0.5 vCPU, 1GB RAM) behind Application Load Balancer
+  - Secrets Manager integration for API keys
+  - CloudWatch log group with 30-day retention
+  - Docker image auto-built and pushed to ECR via CDK
+
+### Changed
+- `config.py` — `OUTPUT_DIR` and `ARCHIVE_FILE` now configurable via env vars for container/EFS compatibility
+- `voice.py` — effect output switched from MP3 to WAV to fix garbled audio in browser playback
+
 ## [0.4.0] - 2026-04-01
 
 ### Added — Phase 4: Web UI
