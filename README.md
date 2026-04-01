@@ -8,8 +8,8 @@ A satirical achievement reward system with AI-generated announcements in the sty
 
 | Phase | Status | Description |
 |-------|--------|-------------|
-| 1 | ✅ Current | CLI generation — achievements printed to terminal |
-| 2 | Planned | Local voice synthesis via Coqui XTTS v2 + audio playback |
+| 1 | ✅ Complete | CLI generation — achievements printed to terminal |
+| 2 | ✅ Complete | Local voice synthesis via Coqui XTTS v2 + audio playback |
 | 3 | Planned | Achievement archive, audio caching, `--list` command |
 | 4 | Planned | Web UI or global hotkey trigger |
 
@@ -23,9 +23,12 @@ achievement_system/
 ├── generator.py          # Claude API achievement generation
 ├── config.py             # Env vars, constants, system prompt
 ├── display.py            # Terminal formatting
+├── voice.py              # Coqui XTTS v2 voice synthesis
+├── player.py             # Audio playback via pygame
 ├── reference_audio/      # Place your voice sample MP3s here
 ├── transcripts/          # Place your transcript TXT files here
-├── output/               # Generated audio lands here (Phase 2)
+├── output/               # Generated audio lands here
+├── tests/                # Unit tests
 ├── .env.example          # Environment variable template
 ├── .gitignore
 └── README.md
@@ -48,8 +51,11 @@ source .venv/bin/activate        # macOS/Linux
 ### 2. Install dependencies
 
 ```bash
-pip install anthropic python-dotenv
+pip install anthropic python-dotenv          # Phase 1 (CLI only)
+pip install TTS pygame                       # Phase 2 (voice synthesis + playback)
 ```
+
+> **Note:** Coqui TTS requires Python <3.12. Use Python 3.11 for full compatibility.
 
 ### 3. Configure environment
 
@@ -85,7 +91,21 @@ python main.py --trigger "fixed a bug I introduced three weeks ago"
 python main.py --trigger "attended a meeting that could have been an email"
 ```
 
-### Raw JSON output (pipe-ready for Phase 2)
+### Speak achievement aloud
+
+```bash
+python main.py --speak
+python main.py --trigger "spilled coffee on the keyboard again" --speak
+```
+
+### Audio only (no terminal output)
+
+```bash
+python main.py --speak-only
+python main.py --trigger "fixed a bug I introduced three weeks ago" --speak-only
+```
+
+### Raw JSON output (pipe-ready)
 
 ```bash
 python main.py --raw
@@ -114,18 +134,22 @@ python main.py --trigger "pushed to main without testing" --raw
 
 ---
 
-## Phase 2 Preview
+## Voice Synthesis (Phase 2)
 
-Phase 2 will add:
+Phase 2 adds local voice cloning via Coqui XTTS v2:
 
-- `voice.py` — Coqui XTTS v2 local voice cloning using your `reference_audio/` samples
-- `player.py` — cross-platform audio playback via pygame
-- `--speak` flag — generate + print + play audio announcement
-- `--speak-only` flag — audio only, no terminal output
+- **`voice.py`** — synthesizes text using your cloned voice from `reference_audio/reference.mp3`
+- **`player.py`** — cross-platform audio playback via pygame
+- **`--speak`** — generate + print + play audio (description, 0.6s pause, reward)
+- **`--speak-only`** — audio only, no terminal output
 
-The `--raw` flag output from Phase 1 is designed to pipe directly into the Phase 2 voice synthesizer.
+### First run
 
-First run in Phase 2 will download the XTTS v2 model (~2GB, one time only).
+The first time you use `--speak` or `--speak-only`, the XTTS v2 model (~2GB) will be downloaded automatically. This only happens once.
+
+### Reference audio
+
+Place your merged voice sample at `reference_audio/reference.mp3`. More audio = better voice cloning (30+ minutes recommended).
 
 ---
 
