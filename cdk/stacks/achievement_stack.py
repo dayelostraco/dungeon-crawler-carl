@@ -127,7 +127,7 @@ class AchievementStack(Stack):
             self,
             "AppImage",
             directory="..",
-            platform=ecr_assets.Platform.LINUX_ARM64,  # match Apple Silicon + ARM Fargate
+            platform=ecr_assets.Platform.LINUX_AMD64,  # x86_64 — avoids ARM library compat issues
             exclude=[
                 "cdk",
                 "finetune_data",
@@ -152,7 +152,7 @@ class AchievementStack(Stack):
             cpu=512,
             memory_limit_mib=1024,
             runtime_platform=ecs.RuntimePlatform(
-                cpu_architecture=ecs.CpuArchitecture.ARM64,
+                cpu_architecture=ecs.CpuArchitecture.X86_64,
                 operating_system_family=ecs.OperatingSystemFamily.LINUX,
             ),
         )
