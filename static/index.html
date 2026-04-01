@@ -191,9 +191,13 @@
       }
     }
 
+    function stripAnnouncerTags(desc) {
+      return desc.replace(/^New Achievement!\s*/i, '').replace(/\s*Your Reward!\s*$/i, '').trim();
+    }
+
     function showCard(data) {
       document.getElementById('cardTitle').textContent = data.title;
-      document.getElementById('cardDesc').textContent = data.description;
+      document.getElementById('cardDesc').textContent = stripAnnouncerTags(data.description);
       document.getElementById('cardReward').textContent = data.reward;
       const card = document.getElementById('card');
       card.classList.remove('visible');
