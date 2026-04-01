@@ -98,6 +98,14 @@
       text-transform: uppercase;
       letter-spacing: 2px;
     }
+    .card-trigger {
+      color: #666;
+      font-size: 0.75rem;
+      font-style: italic;
+      margin-bottom: 0.6rem;
+    }
+    .card-trigger::before { content: '"'; }
+    .card-trigger::after { content: '"'; }
     .card-title {
       color: #f0c040;
       font-size: 1.3rem;
@@ -185,6 +193,7 @@
 
   <div class="card" id="card">
     <div class="card-header">Achievement Unlocked</div>
+    <div class="card-trigger" id="cardTrigger"></div>
     <div class="card-title" id="cardTitle"></div>
     <div class="card-desc" id="cardDesc"></div>
     <div class="card-reward"><strong>REWARD</strong> <span id="cardReward"></span></div>
@@ -250,6 +259,13 @@
 
     function showCard(data) {
       currentAchievementId = data.id;
+      const triggerEl = document.getElementById('cardTrigger');
+      if (data.trigger) {
+        triggerEl.textContent = data.trigger;
+        triggerEl.style.display = 'block';
+      } else {
+        triggerEl.style.display = 'none';
+      }
       document.getElementById('cardTitle').textContent = data.title;
       document.getElementById('cardDesc').textContent = stripAnnouncerTags(data.description);
       document.getElementById('cardReward').textContent = data.reward;

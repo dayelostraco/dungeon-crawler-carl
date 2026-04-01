@@ -55,6 +55,7 @@ def render_card(achievement: dict) -> bytes:
     title = achievement.get("title", "Unknown Achievement")
     description = achievement.get("description", "")
     reward = achievement.get("reward", "")
+    trigger = achievement.get("trigger", "")
 
     # Strip announcer tags from description for display
     desc_clean = description
@@ -69,18 +70,22 @@ def render_card(achievement: dict) -> bytes:
     font_body = _get_font(18)
     font_label = _get_font(16, bold=True)
     font_reward = _get_font(18)
+    font_trigger = _get_font(13)
     font_watermark = _get_font(12)
 
     # Wrap text
+    trigger_lines = textwrap.wrap(f'"{trigger}"', width=58) if trigger else []
     desc_lines = textwrap.wrap(desc_clean, width=52)
     reward_lines = textwrap.wrap(reward, width=48)
 
     # Calculate card height dynamically (all values scaled)
+    line_height_trigger = _s(20)
     line_height_body = _s(26)
     line_height_reward = _s(26)
     card_height = (
         CARD_PADDING
         + _s(30)  # header badge
+        + (len(trigger_lines) * line_height_trigger + _s(10) if trigger_lines else 0)  # trigger
         + _s(20)  # gap
         + _s(36)  # title
         + _s(20)  # gap
@@ -113,7 +118,16 @@ def render_card(achievement: dict) -> bytes:
     badge_h = bbox[3] - bbox[1] + _s(10)
     draw.rectangle([x, y, x + badge_w, y + badge_h], fill=GOLD)
     draw.text((x + _s(8), y + _s(4)), badge_text, fill=BG_COLOR, font=font_header)
-    y += badge_h + _s(20)
+    y += badge_h + _s(10)
+
+    # Trigger text (what the user entered)
+    if trigger_lines:
+        for line in trigger_lines:
+            draw.text((x, y), line, fill=DIM_TEXT, font=font_trigger)
+            y += line_height_trigger
+        y += _s(10)
+    else:
+        y += _s(10)
 
     # Title with star
     draw.text((x, y), f"\u2605  {title}", fill=GOLD, font=font_title)
