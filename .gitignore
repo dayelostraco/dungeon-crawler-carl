@@ -19,6 +19,7 @@ original_source/audio/
 
 # Generated output
 output/
+achievements.json
 
 # XTTS model cache and fine-tuning artifacts
 tts_models/

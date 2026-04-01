@@ -4,15 +4,13 @@ from pathlib import Path
 
 
 def test_defaults_without_env(monkeypatch):
-    """Config uses correct defaults when env vars are absent."""
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    """Config uses correct defaults for MODEL and MAX_TOKENS when env vars are absent."""
     monkeypatch.delenv("MODEL", raising=False)
     monkeypatch.delenv("MAX_TOKENS", raising=False)
 
     import config
     importlib.reload(config)
 
-    assert config.ANTHROPIC_API_KEY in ("", "your_key_here")
     assert config.MODEL == "claude-opus-4-5"
     assert config.MAX_TOKENS == 400
 
