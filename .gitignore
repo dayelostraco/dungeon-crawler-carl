@@ -1,0 +1,33 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Audio files (too large for git)
+reference_audio/*.mp3
+reference_audio/*.wav
+original_source/audio/
+
+# Generated output
+output/
+
+# XTTS model cache
+tts_models/
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo

@@ -1,0 +1,6 @@
+2026-04-01 10:50:10 | 0h 0m 29s
+
+Transcript:
+speaker_1 00:00:01
+IED skill level 3.  It's one thing to take a grenade and toss it,  but it takes a set of brass balls the size of basilisks' eggs to actually build a bomb,  especially with the unreliable crap you find down here.  Every level of this skill increases the damage yield of its explosive devices by 10% and decreases the chances of a catastrophic premature detonation by half.
+

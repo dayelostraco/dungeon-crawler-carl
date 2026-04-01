@@ -1,0 +1,6 @@
+2026-04-01 11:12:53 | 0h 1m 23s
+
+Transcript:
+speaker_1 00:00:00
+Protective shell.  Picture yourself in high school.  Now picture all the girls who would never get anywhere near you.  It's kind of like that,  but on purpose.  Cost purpose.  This is an item-based spell.  This spell does not require mana to cast.  If you want to quit the associated item,  you will lose access. to this spell.  The cooldown will not reset.  Target a 3 -meter radius sphere centered around the right hand of caster,  plus 500 meters of radius per level of intelligence.  Current radius 4.5 meters,  duration 5 seconds,  plus 1 second per level of spell. Current duration 20 seconds,  requires 30 hour cooldown.  A favorite of frontline tanks and castle guards,  the expensive and rare protective shell spell shields the caster and anyone within the sphere from a mob's physical presence or physical attacks.  This spell does not protect against magic or as against non-corporeal entities.  Unlike the more popular shield spell,  this spell does not move with you.  This spell's area of effect remains static once cast,  unimpeded by your physical surroundings.  So if you use this spell only when you really,  really need it,  you are probably only delaying the inevitable by a few seconds.
+
