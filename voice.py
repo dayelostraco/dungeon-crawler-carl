@@ -46,7 +46,7 @@ def _slugify(text: str) -> str:
 
 
 def _apply_ai_effect(input_path: Path, output_path: Path, volume_ramp: bool = False, speed: float = 1.0, gain_db: float = 0.0) -> None:
-    """Apply robotic AI voice effect to an audio file."""
+    """Apply robotic AI voice effect to an audio file. Outputs WAV for clean playback."""
     with AudioFile(str(input_path)) as f:
         audio = f.read(f.frames)
         sr = f.samplerate
@@ -70,8 +70,9 @@ def _apply_ai_effect(input_path: Path, output_path: Path, volume_ramp: bool = Fa
 
     processed = np.clip(processed, -1.0, 1.0)
 
-    with AudioFile(str(output_path), "w", sr, processed.shape[0]) as f:
-        f.write(processed)
+    # Write as WAV to avoid MP3 double-encoding artifacts
+    mono = processed[0] if processed.ndim > 1 else processed
+    sf.write(str(output_path), mono, sr, format="WAV")
 
 
 def synthesize(text: str, filename_hint: str = "", volume_ramp: bool = False, speed: float = 1.0, gain_db: float = 0.0) -> Path:
@@ -88,7 +89,7 @@ def synthesize(text: str, filename_hint: str = "", volume_ramp: bool = False, sp
     slug = _slugify(filename_hint) if filename_hint else "clip"
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     raw_path = OUTPUT_DIR / f"{timestamp}_{slug}_raw.mp3"
-    out_path = OUTPUT_DIR / f"{timestamp}_{slug}.mp3"
+    out_path = OUTPUT_DIR / f"{timestamp}_{slug}.wav"
 
     audio = client.text_to_speech.convert(
         voice_id=VOICE_ID,

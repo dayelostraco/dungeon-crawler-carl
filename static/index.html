@@ -177,7 +177,7 @@
 
     async function playSequence(urls) {
       for (const url of urls) {
-        const name = url.split('/').pop();
+        const name = url.split('/').pop().replace('.wav', '').replace('.mp3', '');
         if (name.includes('_title')) {
           await sleep(300);
           await playAudio(url);

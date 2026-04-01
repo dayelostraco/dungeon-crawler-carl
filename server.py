@@ -95,4 +95,5 @@ def serve_audio(filename: str):
     file_path = OUTPUT_DIR / safe_name
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Audio file not found")
-    return FileResponse(str(file_path), media_type="audio/mpeg")
+    media_type = "audio/wav" if file_path.suffix == ".wav" else "audio/mpeg"
+    return FileResponse(str(file_path), media_type=media_type)
