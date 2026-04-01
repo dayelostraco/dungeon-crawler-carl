@@ -1,6 +1,8 @@
-# Achievement System
+# Dungeon Crawler Carl — Achievement System
 
-A satirical achievement reward system with AI-generated announcements in the style of a gleefully delusional gameshow host. Inspired by the dungeon announcer from the *Dungeon Crawler Carl* series.
+A snarky, AI-powered achievement reward system with voice synthesis. Give it a mundane life event, and it generates a biting achievement announcement — complete with title, description, and a reward that hits where it hurts. Optionally speaks it aloud using a cloned voice with robotic AI effects.
+
+Inspired by the dungeon announcer from the *Dungeon Crawler Carl* book series.
 
 ---
 
@@ -9,8 +11,8 @@ A satirical achievement reward system with AI-generated announcements in the sty
 | Phase | Status | Description |
 |-------|--------|-------------|
 | 1 | ✅ Complete | CLI generation — achievements printed to terminal |
-| 2 | ✅ Complete | Local voice synthesis via Coqui XTTS v2 + audio playback |
-| 3 | Planned | Achievement archive, audio caching, `--list` command |
+| 2 | ✅ Complete | ElevenLabs voice synthesis with AI audio effects |
+| 3 | ✅ Complete | Achievement archive, audio caching, `--list`, `--replay` |
 | 4 | Planned | Web UI or global hotkey trigger |
 
 ---
@@ -18,19 +20,22 @@ A satirical achievement reward system with AI-generated announcements in the sty
 ## Directory Structure
 
 ```
-achievement_system/
+dungeon_crawler_carl/
 ├── main.py               # Entry point and CLI
 ├── generator.py          # Claude API achievement generation
 ├── config.py             # Env vars, constants, system prompt
 ├── display.py            # Terminal formatting
-├── voice.py              # Coqui XTTS v2 voice synthesis
+├── voice.py              # ElevenLabs TTS + AI audio effects
 ├── player.py             # Audio playback via pygame
-├── reference_audio/      # Place your voice sample MP3s here
-├── transcripts/          # Place your transcript TXT files here
-├── output/               # Generated audio lands here
-├── tests/                # Unit tests
+├── archive.py            # Achievement history (JSON log + audio cache)
+├── finetune.py           # XTTS v2 fine-tuning script (experimental)
+├── reference_audio/      # Voice reference samples (for fine-tuning)
+├── transcripts/          # Transcript files (for fine-tuning)
+├── output/               # Generated audio files
+├── tests/                # Unit tests (43 tests)
 ├── .env.example          # Environment variable template
 ├── .gitignore
+├── CHANGELOG.md
 └── README.md
 ```
 
@@ -41,8 +46,8 @@ achievement_system/
 ### 1. Clone and create virtual environment
 
 ```bash
-git clone <your-repo-url>
-cd achievement_system
+git clone https://github.com/dayelostraco/dungeon-crawler-carl.git
+cd dungeon-crawler-carl
 python -m venv .venv
 source .venv/bin/activate        # macOS/Linux
 # .venv\Scripts\activate         # Windows
@@ -51,11 +56,8 @@ source .venv/bin/activate        # macOS/Linux
 ### 2. Install dependencies
 
 ```bash
-pip install anthropic python-dotenv          # Phase 1 (CLI only)
-pip install TTS pygame                       # Phase 2 (voice synthesis + playback)
+pip install anthropic python-dotenv elevenlabs pygame pedalboard numpy soundfile librosa
 ```
-
-> **Note:** Coqui TTS requires Python <3.12. Use Python 3.11 for full compatibility.
 
 ### 3. Configure environment
 
@@ -63,21 +65,28 @@ pip install TTS pygame                       # Phase 2 (voice synthesis + playba
 cp .env.example .env
 ```
 
-Edit `.env` and add your Anthropic API key:
+Edit `.env` and add your API keys:
 
 ```
-ANTHROPIC_API_KEY=your_key_here
+ANTHROPIC_API_KEY=your_anthropic_key_here
+ELEVENLABS_API_KEY=your_elevenlabs_key_here
 ```
 
-### 4. Add reference audio and transcripts
+### 4. ElevenLabs voice setup
 
-Drop your MP3 files into `reference_audio/` and transcript TXT files into `transcripts/`. These will be used in Phase 2 for voice cloning.
+Create a voice on [ElevenLabs](https://elevenlabs.io) by uploading your reference audio samples. Copy the voice ID and optionally set it in `.env`:
+
+```
+ELEVENLABS_VOICE_ID=your_voice_id_here
+```
+
+If not set, the system uses a default voice.
 
 ---
 
 ## Usage
 
-### Random achievement
+### Generate a random achievement
 
 ```bash
 python main.py
@@ -87,29 +96,41 @@ python main.py
 
 ```bash
 python main.py --trigger "spilled coffee on the keyboard again"
-python main.py --trigger "fixed a bug I introduced three weeks ago"
-python main.py --trigger "attended a meeting that could have been an email"
+python main.py --trigger "pushed to production on a Friday at 4:59pm"
+python main.py --trigger "forgot to mute on a zoom call"
 ```
 
 ### Speak achievement aloud
 
 ```bash
 python main.py --speak
-python main.py --trigger "spilled coffee on the keyboard again" --speak
+python main.py --trigger "took a 2 hour lunch and nobody noticed" --speak
 ```
 
 ### Audio only (no terminal output)
 
 ```bash
 python main.py --speak-only
-python main.py --trigger "fixed a bug I introduced three weeks ago" --speak-only
+python main.py --trigger "accidentally replied-all to the entire company" --speak-only
 ```
 
-### Raw JSON output (pipe-ready)
+### Browse achievement history
+
+```bash
+python main.py --list
+```
+
+### Replay a past achievement (with cached audio)
+
+```bash
+python main.py --replay 1
+```
+
+### Raw JSON output
 
 ```bash
 python main.py --raw
-python main.py --trigger "pushed to main without testing" --raw
+python main.py --trigger "event" --raw
 ```
 
 ### Example terminal output
@@ -119,15 +140,14 @@ python main.py --trigger "pushed to main without testing" --raw
 ║  ACHIEVEMENT UNLOCKED                            ║
 ╚══════════════════════════════════════════════════╝
 
-  ★  Baptism by Arabica
+  ★  Corporate Houdini
 
-  New Achievement! You have successfully hydrated your
-  workspace AND your peripheral in a single fluid motion —
-  a two-for-one that our judges are calling unprecedented.
-  (The studio audience is on their feet.) Reward!
+  New Achievement! You vanished for 120 minutes and returned
+  like nothing happened. (Nothing did — no one looks for you.)
+  Your Reward!
 
-  REWARD  Unlocked: The Waterproof Keyboard You Should
-          Have Bought Months Ago
+  REWARD  Unlocked: The crushing realization that your absence
+          changes absolutely nothing.
 
 ──────────────────────────────────────────────────
 ```
@@ -136,27 +156,70 @@ python main.py --trigger "pushed to main without testing" --raw
 
 ## Voice Synthesis (Phase 2)
 
-Phase 2 adds local voice cloning via Coqui XTTS v2:
+Voice synthesis uses the [ElevenLabs API](https://elevenlabs.io) with a post-processing AI effect chain:
 
-- **`voice.py`** — synthesizes text using your cloned voice from `reference_audio/reference.mp3`
-- **`player.py`** — cross-platform audio playback via pygame
-- **`--speak`** — generate + print + play audio (description, 0.6s pause, reward)
-- **`--speak-only`** — audio only, no terminal output
+### Audio pipeline
 
-### First run
+1. Text is split into segments: **"New Achievement!"** | **title** | **body** | **"Your Reward!"** | **reward**
+2. Each segment is synthesized via ElevenLabs with your cloned voice
+3. AI effects are applied via [pedalboard](https://github.com/spotify/pedalboard):
+   - **Chorus** — subtle doubling for synthetic shimmer
+   - **Pitch shift** (-1.0 semitone) — slight deepening
+   - **Bitcrush** (11-bit) — digital grit
+   - **Reverb** — metallic AI-booth ambiance
+4. Segment-specific processing:
+   - **"New Achievement!"** — boosted +5dB
+   - **Body** — played at 1.15x speed
+   - **"Your Reward!"** — volume ramp from 40% to 220% (crescendo)
+5. All segments pre-synthesized before playback for seamless delivery
 
-The first time you use `--speak` or `--speak-only`, the XTTS v2 model (~2GB) will be downloaded automatically. This only happens once.
+### Audio caching
 
-### Reference audio
+When `--speak` is used, synthesized audio files are cached in `output/` and linked to the achievement archive. Using `--replay` plays cached audio without re-calling the ElevenLabs API.
 
-Place your merged voice sample at `reference_audio/reference.mp3`. More audio = better voice cloning (30+ minutes recommended).
+---
+
+## Achievement Archive (Phase 3)
+
+Every generated achievement is automatically saved to `achievements.json` with:
+- Achievement title, description, and reward
+- Trigger text (if provided)
+- Timestamp
+- Paths to cached audio files (if `--speak` was used)
+
+Use `--list` to browse history and `--replay N` to replay any past achievement.
 
 ---
 
 ## Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ANTHROPIC_API_KEY` | required | Your Anthropic API key |
-| `MODEL` | `claude-opus-4-5` | Claude model to use |
-| `MAX_TOKENS` | `400` | Max tokens for generation |
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `ANTHROPIC_API_KEY` | Yes | — | Anthropic API key for Claude |
+| `ELEVENLABS_API_KEY` | For voice | — | ElevenLabs API key for TTS |
+| `ELEVENLABS_VOICE_ID` | No | built-in default | ElevenLabs voice ID to use |
+| `MODEL` | No | `claude-opus-4-5` | Claude model to use |
+| `MAX_TOKENS` | No | `400` | Max tokens for generation |
+
+---
+
+## Development
+
+### Run tests
+
+```bash
+pip install pytest pytest-mock
+python -m pytest tests/ -v
+```
+
+### Fine-tuning (experimental)
+
+A local XTTS v2 fine-tuning script is included for voice cloning experimentation:
+
+```bash
+python finetune.py --prepare   # Segment audio with Whisper
+python finetune.py --train     # Fine-tune XTTS v2 model
+python finetune.py --test      # Test fine-tuned model
+```
+
+Requires Python 3.11 and additional dependencies: `TTS`, `faster-whisper`, `torch<2.6`, `transformers>=4.40,<4.45`.

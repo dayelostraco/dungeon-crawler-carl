@@ -1,20 +1,25 @@
 # transcripts/
 
-Place your transcript TXT files here — one per audio segment.
+Transcript files corresponding to the reference audio segments.
 
-These transcripts accompany the reference audio files and may be used in Phase 2 to improve voice cloning accuracy or as training context.
+## Current usage
 
-## Naming Convention
+These transcripts are used for:
+- **XTTS v2 fine-tuning** (experimental, via `finetune.py --prepare`) — Whisper re-transcribes the audio but these serve as reference/verification
+- Context for the announcer persona — the content demonstrates the tone and style the system prompt is based on
 
-Match transcript filenames to their corresponding audio files:
+## Naming convention
+
+Transcript filenames describe their content type:
 
 ```
-reference_audio/20260401103942.mp3  →  transcripts/20260401103942.txt
-reference_audio/20260401104032.mp3  →  transcripts/20260401104032.txt
+Speech_ ...    — Achievement announcement speeches
+Discussion_ ...— Item/mechanic explanations
+Report_ ...    — Character/creature analyses
+Training_ ...  — Skill level-up narrations
 ```
 
 ## Notes
 
 - Plain text, UTF-8 encoded
-- One file per audio segment is preferred over a single merged transcript
-- This directory is committed to git; transcript text files are small and safe to commit
+- Small files, safe to commit to git

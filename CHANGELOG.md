@@ -1,0 +1,52 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+## [0.3.0] - 2026-04-01
+
+### Added — Phase 3: Achievement Archive
+- `archive.py` — JSON-based achievement log with save, load, and lookup
+- `--list` flag to browse all archived achievements in a compact table
+- `--replay N` flag to replay any past achievement by ID with cached audio
+- Audio caching — synthesized files are stored and reused on replay without re-calling ElevenLabs
+- Every generated achievement is automatically archived with timestamp, trigger, and audio file paths
+- 9 new archive unit tests
+
+## [0.2.0] - 2026-04-01
+
+### Added — Phase 2: Voice Synthesis
+- `voice.py` — ElevenLabs API integration for text-to-speech with cloned voices
+- `player.py` — pygame-based audio playback with MP3 support
+- `--speak` flag — generate, print, and play achievement audio
+- `--speak-only` flag — audio-only mode, no terminal output
+- AI audio effect chain via Spotify's pedalboard library:
+  - Chorus (2.0Hz, 25% depth) for synthetic shimmer
+  - Pitch shift (-1.0 semitone) for depth
+  - Bitcrush (11-bit) for digital grit
+  - Reverb (25% room, 20% wet) for AI-booth ambiance
+- Description split into 5 audio segments with distinct processing:
+  - "New Achievement!" — +5dB gain boost
+  - Title — +3dB gain boost
+  - Body — 1.15x playback speed
+  - "Your Reward!" — volume crescendo (40% to 220%)
+  - Reward — normal level after 0.6s pause
+- Pre-synthesis of all segments before playback for seamless delivery
+- `finetune.py` — experimental XTTS v2 fine-tuning script (Whisper data prep + GPT training)
+
+### Changed
+- System prompt rewritten — snarkier, more biting tone with varied reward formats
+- Descriptions shortened to 20-35 words for punchier TTS delivery
+- "Reward!" changed to "Your Reward!" for better cadence
+- `generator.py` now handles markdown-wrapped JSON responses from Claude
+
+## [0.1.0] - 2026-04-01
+
+### Added — Phase 1: CLI Generation
+- `main.py` — CLI entry point with `--trigger` and `--raw` flags
+- `generator.py` — Claude API integration for achievement generation with JSON retry
+- `config.py` — environment variable loading, path constants, system prompt
+- `display.py` — terminal formatting with Unicode box-drawing characters
+- System prompt defining the Achievement Intercom persona
+- 34 unit tests across all Phase 1 modules
+- Reference audio samples and transcripts for future voice cloning
+- Build prompts in `prompts/` directory

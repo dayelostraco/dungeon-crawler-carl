@@ -1,17 +1,21 @@
 # reference_audio/
 
-Place your voice sample MP3 files here.
+Voice reference samples for fine-tuning and experimentation.
 
-These files are used in Phase 2 for Coqui XTTS v2 voice cloning.
+## Current usage
 
-## Recommended
+The primary voice synthesis pipeline uses **ElevenLabs API** — voice cloning is configured on the ElevenLabs platform, not from local files.
 
-- A merged single MP3 of all samples named `reference.mp3` works best as the primary reference
-- Individual segment files can be kept here for reference
-- More audio = better voice cloning accuracy (30+ minutes is ideal)
+These reference audio files are used for:
+- **XTTS v2 fine-tuning** (experimental, via `finetune.py`)
+- Backup/archive of the original voice samples used to create the ElevenLabs voice
+
+## Files
+
+- Individual MP3 clips (timestamped filenames) — segments of the reference voice
+- `reference.mp3` — merged file of all segments (~33 minutes)
 
 ## Notes
 
-- XTTS v2 will auto-convert MP3 to WAV on first synthesis run
-- This directory is committed to git but its contents are not — add your files locally
-- Do not commit large audio files to the repository
+- Audio files are excluded from git via `.gitignore` (too large)
+- This directory is committed but its contents are not — add your files locally
