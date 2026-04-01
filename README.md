@@ -13,7 +13,7 @@ Inspired by the dungeon announcer from the *Dungeon Crawler Carl* book series.
 | 1 | ✅ Complete | CLI generation — achievements printed to terminal |
 | 2 | ✅ Complete | ElevenLabs voice synthesis with AI audio effects |
 | 3 | ✅ Complete | Achievement archive, audio caching, `--list`, `--replay` |
-| 4 | Planned | Web UI or global hotkey trigger |
+| 4 | ✅ Complete | Web UI via FastAPI + single-page app |
 
 ---
 
@@ -28,6 +28,8 @@ dungeon_crawler_carl/
 ├── voice.py              # ElevenLabs TTS + AI audio effects
 ├── player.py             # Audio playback via pygame
 ├── archive.py            # Achievement history (JSON log + audio cache)
+├── server.py             # FastAPI web server
+├── static/index.html     # Web UI (single-page app)
 ├── finetune.py           # XTTS v2 fine-tuning script (experimental)
 ├── reference_audio/      # Voice reference samples (for fine-tuning)
 ├── transcripts/          # Transcript files (for fine-tuning)
@@ -56,7 +58,7 @@ source .venv/bin/activate        # macOS/Linux
 ### 2. Install dependencies
 
 ```bash
-pip install anthropic python-dotenv elevenlabs pygame pedalboard numpy soundfile librosa
+pip install anthropic python-dotenv elevenlabs pygame pedalboard numpy soundfile librosa fastapi "uvicorn[standard]"
 ```
 
 ### 3. Configure environment
@@ -151,6 +153,27 @@ python main.py --trigger "event" --raw
 
 ──────────────────────────────────────────────────
 ```
+
+---
+
+## Web UI (Phase 4)
+
+A browser-based interface for generating and replaying achievements.
+
+### Start the server
+
+```bash
+uvicorn server:app --reload
+# Open http://localhost:8000
+```
+
+### Features
+
+- Text input for trigger events with a Generate button
+- Achievement card with game-style dark theme and gold accents
+- Automatic audio playback in the browser with correct segment pauses
+- Achievement history list — click any past achievement to replay it
+- Loading indicator during the 8-15 second generation process
 
 ---
 

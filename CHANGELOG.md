@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2026-04-01
+
+### Added — Phase 4: Web UI
+- `server.py` — FastAPI web server with REST API endpoints
+  - `POST /api/generate` — generate achievement with audio synthesis
+  - `GET /api/achievements` — list all archived achievements
+  - `GET /api/achievements/{id}` — get/replay single achievement
+  - `GET /audio/{filename}` — serve cached audio files
+- `static/index.html` — single-page web app (vanilla HTML/CSS/JS)
+  - Dark theme with gold accents and game-style achievement card
+  - Text input for trigger events with Generate button
+  - Automatic audio playback with correct segment pauses via Web Audio
+  - Achievement history list with click-to-replay
+  - Loading state with pulsing animation during generation
+  - Enter key to submit
+- New dependencies: `fastapi`, `uvicorn[standard]`
+
 ## [0.3.0] - 2026-04-01
 
 ### Added — Phase 3: Achievement Archive

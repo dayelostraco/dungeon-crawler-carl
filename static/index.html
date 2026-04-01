@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Achievement Intercom</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Courier New', monospace;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+    h1 {
+      color: #f0c040;
+      font-size: 1.8rem;
+      margin-bottom: 0.3rem;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+    .subtitle {
+      color: #888;
+      font-size: 0.8rem;
+      margin-bottom: 2rem;
+    }
+    .input-row {
+      display: flex;
+      gap: 0.5rem;
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 1.5rem;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      background: #16213e;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #e0e0e0;
+      font-family: inherit;
+      font-size: 0.95rem;
+    }
+    input[type="text"]::placeholder { color: #555; }
+    input[type="text"]:focus { outline: none; border-color: #f0c040; }
+    button {
+      padding: 0.75rem 1.5rem;
+      background: #f0c040;
+      color: #1a1a2e;
+      border: none;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    button:hover { background: #ffd060; }
+    button:disabled { background: #555; color: #888; cursor: not-allowed; }
+
+    .status {
+      color: #f0c040;
+      font-size: 0.85rem;
+      height: 1.2rem;
+      margin-bottom: 1rem;
+    }
+    .status.pulsing { animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    .card {
+      width: 100%;
+      max-width: 600px;
+      background: #16213e;
+      border: 2px solid #f0c040;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      display: none;
+      animation: fadeIn 0.4s ease-out;
+    }
+    .card.visible { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+    .card-header {
+      background: #f0c040;
+      color: #1a1a2e;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 0.8rem;
+      display: inline-block;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    .card-title {
+      color: #f0c040;
+      font-size: 1.3rem;
+      margin-bottom: 0.8rem;
+    }
+    .card-title::before { content: "\2605  "; }
+    .card-desc {
+      color: #ccc;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+    .card-reward {
+      border-top: 1px solid #333;
+      padding-top: 0.8rem;
+      color: #e0e0e0;
+    }
+    .card-reward strong { color: #f0c040; margin-right: 0.5rem; }
+
+    .history { width: 100%; max-width: 600px; }
+    .history h2 {
+      color: #888;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 0.8rem;
+      border-bottom: 1px solid #333;
+      padding-bottom: 0.4rem;
+    }
+    .history-item {
+      padding: 0.6rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.3rem;
+    }
+    .history-item:hover { background: #16213e; }
+    .history-item .title { color: #f0c040; font-size: 0.85rem; }
+    .history-item .trigger { color: #666; font-size: 0.75rem; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .history-empty { color: #555; font-size: 0.85rem; font-style: italic; }
+  </style>
+</head>
+<body>
+  <h1>Achievement Intercom</h1>
+  <p class="subtitle">describe what you did. we'll judge you for it.</p>
+
+  <div class="input-row">
+    <input type="text" id="trigger" placeholder="e.g. took a 2 hour lunch and nobody noticed" />
+    <button id="generate" onclick="handleGenerate()">Generate</button>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <div class="card" id="card">
+    <div class="card-header">Achievement Unlocked</div>
+    <div class="card-title" id="cardTitle"></div>
+    <div class="card-desc" id="cardDesc"></div>
+    <div class="card-reward"><strong>REWARD</strong> <span id="cardReward"></span></div>
+  </div>
+
+  <div class="history">
+    <h2>Achievement History</h2>
+    <div id="historyList"><p class="history-empty">No achievements yet. Go do something questionable.</p></div>
+  </div>
+
+  <script>
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    function playAudio(url) {
+      return new Promise((resolve, reject) => {
+        const audio = new Audio(url);
+        audio.onended = resolve;
+        audio.onerror = reject;
+        audio.play().catch(reject);
+      });
+    }
+
+    async function playSequence(urls) {
+      for (const url of urls) {
+        const name = url.split('/').pop();
+        if (name.includes('_title')) {
+          await sleep(300);
+          await playAudio(url);
+          await sleep(400);
+        } else if (name.includes('_reward') && !name.includes('_your_reward')) {
+          await sleep(600);
+          await playAudio(url);
+        } else {
+          await playAudio(url);
+        }
+      }
+    }
+
+    function showCard(data) {
+      document.getElementById('cardTitle').textContent = data.title;
+      document.getElementById('cardDesc').textContent = data.description;
+      document.getElementById('cardReward').textContent = data.reward;
+      const card = document.getElementById('card');
+      card.classList.remove('visible');
+      void card.offsetWidth; /* reset animation */
+      card.classList.add('visible');
+    }
+
+    function setStatus(text, pulsing = false) {
+      const el = document.getElementById('status');
+      el.textContent = text;
+      el.className = pulsing ? 'status pulsing' : 'status';
+    }
+
+    async function handleGenerate() {
+      const btn = document.getElementById('generate');
+      const input = document.getElementById('trigger');
+      const trigger = input.value.trim() || null;
+
+      btn.disabled = true;
+      setStatus('Summoning achievement...', true);
+
+      try {
+        const res = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ trigger }),
+        });
+        if (!res.ok) throw new Error('Generation failed');
+        const data = await res.json();
+
+        showCard(data);
+        setStatus('Playing audio...', true);
+
+        if (data.audio_urls && data.audio_urls.length > 0) {
+          await playSequence(data.audio_urls);
+        }
+
+        setStatus('');
+        input.value = '';
+        loadHistory();
+      } catch (err) {
+        setStatus('Error: ' + err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function handleReplay(id) {
+      setStatus('Loading achievement...', true);
+      try {
+        const res = await fetch(`/api/achievements/${id}`);
+        if (!res.ok) throw new Error('Not found');
+        const data = await res.json();
+
+        showCard(data);
+        setStatus('Playing audio...', true);
+
+        if (data.audio_urls && data.audio_urls.length > 0) {
+          await playSequence(data.audio_urls);
+        }
+        setStatus('');
+      } catch (err) {
+        setStatus('Error: ' + err.message);
+      }
+    }
+
+    async function loadHistory() {
+      try {
+        const res = await fetch('/api/achievements');
+        const data = await res.json();
+        const list = document.getElementById('historyList');
+
+        if (data.length === 0) {
+          list.innerHTML = '<p class="history-empty">No achievements yet. Go do something questionable.</p>';
+          return;
+        }
+
+        list.innerHTML = data.map(e => `
+          <div class="history-item" onclick="handleReplay(${e.id})">
+            <span class="title">${e.title}</span>
+            <span class="trigger">${e.trigger || 'random'}</span>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('Failed to load history', err);
+      }
+    }
+
+    /* submit on Enter */
+    document.getElementById('trigger').addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleGenerate();
+    });
+
+    /* load history on page load */
+    loadHistory();
+  </script>
+</body>
+</html>
