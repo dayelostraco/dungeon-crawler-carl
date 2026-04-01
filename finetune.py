@@ -8,13 +8,14 @@ Usage:
 """
 
 import os
+
 os.environ["COQUI_TOS_AGREED"] = "1"
 
 import argparse
 import gc
 from pathlib import Path
 
-from config import REFERENCE_AUDIO_DIR, OUTPUT_DIR, PROJECT_ROOT
+from config import OUTPUT_DIR, PROJECT_ROOT, REFERENCE_AUDIO_DIR
 
 FINETUNE_DIR = PROJECT_ROOT / "finetune_data"
 FINETUNE_OUT = PROJECT_ROOT / "finetune_output"
@@ -22,9 +23,9 @@ FINETUNE_OUT = PROJECT_ROOT / "finetune_output"
 
 def prepare_data():
     """Segment reference audio into training chunks using Whisper."""
+    import pandas as pd
     import torch
     import torchaudio
-    import pandas as pd
     from faster_whisper import WhisperModel
     from tqdm import tqdm
     from TTS.tts.layers.xtts.tokenizer import multilingual_cleaners
@@ -150,7 +151,7 @@ def train():
         output_path=str(FINETUNE_OUT),
     )
 
-    print(f"\nFine-tuning complete!")
+    print("\nFine-tuning complete!")
     print(f"Model output: {trainer_out}")
     print(f"Speaker ref:  {speaker_ref}")
 
@@ -254,9 +255,9 @@ def test():
     torchaudio.save(str(reward_path), torch.tensor(out["wav"]).unsqueeze(0), 24000)
 
     # Combine and play
+    import librosa
     import numpy as np
     import soundfile as sf
-    import librosa
 
     opener, _ = librosa.load(str(opener_path), sr=24000)
     body, _ = librosa.load(str(body_path), sr=24000)

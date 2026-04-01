@@ -5,10 +5,9 @@ from pathlib import Path
 
 import numpy as np
 import soundfile as sf
-from pedalboard import Pedalboard, Chorus, Reverb, PitchShift, Gain, Bitcrush
-from pedalboard.io import AudioFile
-
 from elevenlabs.client import ElevenLabs
+from pedalboard import Bitcrush, Chorus, Pedalboard, PitchShift, Reverb
+from pedalboard.io import AudioFile
 
 from config import OUTPUT_DIR
 
@@ -18,12 +17,24 @@ VOICE_ID: str = os.environ.get("ELEVENLABS_VOICE_ID", "dHd5gvgSOzSfduK4CvEg")
 # Module-level singleton
 _client: ElevenLabs | None = None
 
-# AI voice effect chain — split the difference
+# AI voice effect chain — tuned iteratively for a "robotic announcer" feel.
+# Values landed between two extremes: too subtle to hear (v1) and
+# too distorted to understand (v2). These are the sweet spot.
 _fx = Pedalboard([
-    Chorus(rate_hz=2.0, depth=0.25, mix=0.4, centre_delay_ms=7.0),
-    PitchShift(semitones=-1.0),
-    Bitcrush(bit_depth=11),
-    Reverb(room_size=0.25, damping=0.6, wet_level=0.2, dry_level=0.8),
+    Chorus(                     # Synthetic shimmer / doubling effect
+        rate_hz=2.0,            # modulation speed — 2Hz gives a gentle wobble
+        depth=0.25,             # 25% pitch variation — audible but not warbling
+        mix=0.4,                # 40% wet — noticeable without drowning the voice
+        centre_delay_ms=7.0,    # 7ms base delay — short enough to sound cohesive
+    ),
+    PitchShift(semitones=-1.0), # Drop 1 semitone — adds gravitas without sounding unnatural
+    Bitcrush(bit_depth=11),     # 11-bit — subtle digital grit, not lo-fi (8-bit was too much)
+    Reverb(                     # Metallic "AI booth" ambiance
+        room_size=0.25,         # small room — tight, not cavernous
+        damping=0.6,            # absorbs highs — prevents tinny ringing
+        wet_level=0.2,          # 20% reverb — present but not washy
+        dry_level=0.8,          # 80% dry signal preserved
+    ),
 ])
 
 
@@ -32,7 +43,7 @@ def _get_client() -> ElevenLabs:
     global _client
     if _client is None:
         if not ELEVENLABS_API_KEY:
-            raise EnvironmentError(
+            raise OSError(
                 "ELEVENLABS_API_KEY is not set. Add it to your environment."
             )
         _client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
@@ -64,6 +75,10 @@ def _apply_ai_effect(input_path: Path, output_path: Path, volume_ramp: bool = Fa
         processed = processed * gain_linear
 
     if volume_ramp:
+        # Linear crescendo across the clip — used for "Your Reward!" to build energy.
+        # 0.4 (40%) start is quiet enough to feel like a buildup.
+        # 2.2 (220%) end clips to ±1.0 but that's intentional — it maxes out the
+        # dynamic range for the final syllable. Tuned with the user to "go higher".
         num_samples = processed.shape[1]
         ramp = np.linspace(0.4, 2.2, num_samples).astype(np.float32)
         processed = processed * ramp[np.newaxis, :]
@@ -82,7 +97,7 @@ def synthesize(text: str, filename_hint: str = "", volume_ramp: bool = False, sp
     filename_hint: short slug used in the output filename
     volume_ramp: if True, audio builds from low to high volume
     speed: playback speed multiplier (1.0 = normal, 1.15 = slightly faster)
-    Returns Path to the generated MP3 file in output/
+    Returns Path to the generated WAV file in output/
     """
     client = _get_client()
 

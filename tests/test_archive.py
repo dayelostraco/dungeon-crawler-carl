@@ -1,7 +1,5 @@
-import json
+
 import pytest
-from pathlib import Path
-from unittest.mock import patch
 
 SAMPLE_ACHIEVEMENT = {
     "title": "Corporate Houdini",
@@ -16,8 +14,9 @@ def tmp_archive(tmp_path, monkeypatch):
     archive_file = tmp_path / "achievements.json"
     import config
     monkeypatch.setattr(config, "ARCHIVE_FILE", archive_file)
-    import archive
     import importlib
+
+    import archive
     importlib.reload(archive)
     return archive_file
 
@@ -94,7 +93,7 @@ def test_get_missing_id(tmp_archive):
 
 def test_archive_preserves_all_fields(tmp_archive):
     import archive
-    entry = archive.save(SAMPLE_ACHIEVEMENT, trigger="test", audio_files=["/a.mp3"])
+    archive.save(SAMPLE_ACHIEVEMENT, trigger="test", audio_files=["/a.mp3"])
 
     loaded = archive.get(1)
     assert loaded["title"] == SAMPLE_ACHIEVEMENT["title"]

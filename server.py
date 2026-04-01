@@ -6,6 +6,7 @@ Usage:
     Open http://localhost:8000
 """
 
+import logging
 import os
 from pathlib import Path
 
@@ -14,14 +15,15 @@ from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+import archive
 from config import OUTPUT_DIR
 from generator import generate
-from main import _synthesize_achievement
-import archive
+from synthesis import synthesize_achievement
+
+logger = logging.getLogger("achievement-intercom")
 
 app = FastAPI(title="Achievement Intercom")
 
-# Serve static files
 STATIC_DIR = Path(__file__).parent / "static"
 STATIC_DIR.mkdir(exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
@@ -56,8 +58,26 @@ def root():
 
 @app.post("/api/generate")
 def api_generate(req: GenerateRequest):
-    achievement = generate(trigger=req.trigger)
-    audio_files = _synthesize_achievement(achievement)
+    try:
+        achievement = generate(trigger=req.trigger)
+    except OSError as e:
+        raise HTTPException(status_code=500, detail=f"Configuration error: {e}") from None
+    except ValueError as e:
+        raise HTTPException(status_code=502, detail=f"Generation failed: {e}") from None
+    except Exception as e:
+        logger.exception("Achievement generation failed")
+        raise HTTPException(status_code=502, detail=f"API error: {e}") from None
+
+    try:
+        audio_files = synthesize_achievement(achievement)
+    except OSError as e:
+        # Missing ElevenLabs key — return achievement without audio
+        logger.warning("Voice synthesis skipped: %s", e)
+        audio_files = []
+    except Exception:
+        logger.exception("Voice synthesis failed")
+        audio_files = []
+
     entry = archive.save(
         achievement=achievement,
         trigger=req.trigger,
@@ -78,19 +98,20 @@ def api_achievement(entry_id: int):
     if not entry:
         raise HTTPException(status_code=404, detail="Achievement not found")
 
-    # Re-synthesize if audio files are missing
     if entry.get("audio_files"):
         existing = [f for f in entry["audio_files"] if os.path.exists(f)]
         if not existing:
-            audio_files = _synthesize_achievement(entry)
-            entry["audio_files"] = audio_files
+            try:
+                entry["audio_files"] = synthesize_achievement(entry)
+            except Exception:
+                logger.exception("Re-synthesis failed for entry %d", entry_id)
+                entry["audio_files"] = []
 
     return _entry_response(entry)
 
 
 @app.get("/audio/{filename}")
 def serve_audio(filename: str):
-    # Sanitize filename to prevent path traversal
     safe_name = Path(filename).name
     file_path = OUTPUT_DIR / safe_name
     if not file_path.exists():

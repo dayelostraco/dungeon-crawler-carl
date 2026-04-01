@@ -1,20 +1,40 @@
-from constructs import Construct
 import aws_cdk as cdk
 from aws_cdk import (
-    Stack,
     Duration,
     RemovalPolicy,
-    aws_ec2 as ec2,
-    aws_ecs as ecs,
-    aws_efs as efs,
-    aws_ecr_assets as ecr_assets,
-    aws_elasticloadbalancingv2 as elbv2,
-    aws_logs as logs,
-    aws_secretsmanager as secretsmanager,
-    aws_route53 as route53,
-    aws_route53_targets as targets,
+    Stack,
+)
+from aws_cdk import (
     aws_certificatemanager as acm,
 )
+from aws_cdk import (
+    aws_ec2 as ec2,
+)
+from aws_cdk import (
+    aws_ecr_assets as ecr_assets,
+)
+from aws_cdk import (
+    aws_ecs as ecs,
+)
+from aws_cdk import (
+    aws_efs as efs,
+)
+from aws_cdk import (
+    aws_elasticloadbalancingv2 as elbv2,
+)
+from aws_cdk import (
+    aws_logs as logs,
+)
+from aws_cdk import (
+    aws_route53 as route53,
+)
+from aws_cdk import (
+    aws_route53_targets as targets,
+)
+from aws_cdk import (
+    aws_secretsmanager as secretsmanager,
+)
+from constructs import Construct
 
 
 class AchievementStack(Stack):

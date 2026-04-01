@@ -1,6 +1,7 @@
 import json
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 SAMPLE_ACHIEVEMENT = {
     "title": "Baptism by Arabica",
@@ -116,7 +117,7 @@ def test_generate_uses_system_prompt(mock_cls):
 @patch("generator.anthropic.Anthropic")
 def test_generate_passes_model_and_max_tokens(mock_cls):
     """generate() passes MODEL and MAX_TOKENS from config."""
-    from generator import generate, MODEL, MAX_TOKENS
+    from generator import MAX_TOKENS, MODEL, generate
 
     client = MagicMock()
     mock_cls.return_value = client

@@ -1,7 +1,9 @@
 import json
 import re
+
 import anthropic
-from config import ANTHROPIC_API_KEY, MODEL, MAX_TOKENS, SYSTEM_PROMPT
+
+from config import ANTHROPIC_API_KEY, MAX_TOKENS, MODEL, SYSTEM_PROMPT
 
 
 def generate(trigger: str | None = None) -> dict:
@@ -11,7 +13,7 @@ def generate(trigger: str | None = None) -> dict:
     Returns dict with keys: title, description, reward
     """
     if not ANTHROPIC_API_KEY:
-        raise EnvironmentError("ANTHROPIC_API_KEY is not set. Copy .env.example to .env and add your key.")
+        raise OSError("ANTHROPIC_API_KEY is not set. Copy .env.example to .env and add your key.")
 
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 

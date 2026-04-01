@@ -1,6 +1,5 @@
 import json
 from datetime import datetime
-from pathlib import Path
 
 from config import ARCHIVE_FILE
 
@@ -34,7 +33,7 @@ def load_all() -> list[dict]:
     """Load all archived achievements."""
     if not ARCHIVE_FILE.exists():
         return []
-    with open(ARCHIVE_FILE, "r", encoding="utf-8") as f:
+    with open(ARCHIVE_FILE, encoding="utf-8") as f:
         return json.load(f)
 
 

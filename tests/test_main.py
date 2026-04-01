@@ -1,7 +1,7 @@
 import json
-import sys
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 SAMPLE_ACHIEVEMENT = {
     "title": "Baptism by Arabica",
@@ -104,7 +104,7 @@ def test_main_generation_error(mock_gen, capsys):
     assert "Generation error" in captured.err
 
 
-@patch("main.generate", side_effect=EnvironmentError("no key"))
+@patch("main.generate", side_effect=OSError("no key"))
 @patch("main.ANTHROPIC_API_KEY", "sk-test")
 def test_main_config_error(mock_gen, capsys):
     """Config error: prints error and exits 1."""

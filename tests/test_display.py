@@ -1,7 +1,7 @@
 import io
 import sys
 
-from display import print_achievement, _wrap, BOX_WIDTH, WRAP_WIDTH
+from display import BOX_WIDTH, WRAP_WIDTH, _wrap, print_achievement
 
 SAMPLE_ACHIEVEMENT = {
     "title": "Baptism by Arabica",
