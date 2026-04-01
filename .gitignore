@@ -20,8 +20,10 @@ original_source/audio/
 # Generated output
 output/
 
-# XTTS model cache
+# XTTS model cache and fine-tuning artifacts
 tts_models/
+finetune_data/
+finetune_output/
 
 # macOS
 .DS_Store

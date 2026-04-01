@@ -1,12 +1,11 @@
 import argparse
 import json
+import os
 import sys
 
-from config import ANTHROPIC_API_KEY, REFERENCE_AUDIO_DIR
+from config import ANTHROPIC_API_KEY
 from generator import generate
 from display import print_achievement
-
-REFERENCE_MP3 = REFERENCE_AUDIO_DIR / "reference.mp3"
 
 
 def parse_args() -> argparse.Namespace:
@@ -42,11 +41,55 @@ def parse_args() -> argparse.Namespace:
 def _speak(achievement: dict) -> None:
     """Synthesize and play the achievement audio."""
     from voice import synthesize
-    from player import play_with_pause
+    from player import play, play_with_pause
+    import re
 
-    desc_wav = synthesize(achievement["description"], filename_hint="description")
-    reward_wav = synthesize(achievement["reward"], filename_hint="reward")
-    play_with_pause(desc_wav, 0.6, reward_wav)
+    desc = achievement["description"]
+
+    # Split into: "New Achievement!" | body | "Your Reward!"
+    opener = None
+    body = desc
+    closer = None
+
+    # Extract opener
+    opener_match = re.match(r"(New Achievement!)\s*(.*)", body, flags=re.IGNORECASE | re.DOTALL)
+    if opener_match:
+        opener = opener_match.group(1).strip()
+        body = opener_match.group(2).strip()
+
+    # Extract closer
+    closer_match = re.split(r"(Your Reward!)\s*$", body, flags=re.IGNORECASE)
+    if len(closer_match) >= 2:
+        body = closer_match[0].strip()
+        closer = closer_match[1].strip()
+
+    title = achievement.get("title", "")
+
+    # Pre-synthesize all pieces before playback
+    opener_audio = synthesize(opener, filename_hint="opener", gain_db=5.0) if opener else None
+    title_audio = synthesize(title, filename_hint="title", gain_db=3.0) if title else None
+    body_audio = synthesize(body, filename_hint="description", speed=1.15)
+    closer_audio = synthesize(closer, filename_hint="your_reward", volume_ramp=True) if closer else None
+    reward_audio = synthesize(achievement["reward"], filename_hint="reward")
+
+    # Play back: opener → pause → title → pause → body → closer → pause → reward
+    import time
+
+    if opener_audio:
+        play(opener_audio)
+
+    if title_audio:
+        time.sleep(0.3)
+        play(title_audio)
+        time.sleep(0.4)
+
+    play(body_audio)
+
+    if closer_audio:
+        play(closer_audio)
+
+    time.sleep(0.6)
+    play(reward_audio)
 
 
 def main() -> None:
@@ -62,10 +105,10 @@ def main() -> None:
         )
         sys.exit(1)
 
-    if (args.speak or args.speak_only) and not REFERENCE_MP3.exists():
+    if (args.speak or args.speak_only) and not os.environ.get("ELEVENLABS_API_KEY"):
         print(
-            "\nReference audio not found. "
-            f"Place your voice sample at {REFERENCE_MP3}\n",
+            "\nElevenLabs API key not found. "
+            "Set ELEVENLABS_API_KEY in your environment.\n",
             file=sys.stderr,
         )
         sys.exit(1)

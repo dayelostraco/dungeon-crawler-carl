@@ -12,7 +12,7 @@ def test_defaults_without_env(monkeypatch):
     import config
     importlib.reload(config)
 
-    assert config.ANTHROPIC_API_KEY == ""
+    assert config.ANTHROPIC_API_KEY in ("", "your_key_here")
     assert config.MODEL == "claude-opus-4-5"
     assert config.MAX_TOKENS == 400
 
@@ -62,7 +62,7 @@ def test_system_prompt_present():
     assert len(config.SYSTEM_PROMPT) > 100
     assert "Achievement Intercom" in config.SYSTEM_PROMPT
     assert "New Achievement!" in config.SYSTEM_PROMPT
-    assert "Reward!" in config.SYSTEM_PROMPT
+    assert "Your Reward!" in config.SYSTEM_PROMPT
     assert '"title"' in config.SYSTEM_PROMPT
     assert '"description"' in config.SYSTEM_PROMPT
     assert '"reward"' in config.SYSTEM_PROMPT

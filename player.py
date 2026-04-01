@@ -11,11 +11,12 @@ def _init_mixer() -> None:
 
 
 def play(path: Path) -> None:
-    """Play a WAV file. Blocks until playback is complete."""
+    """Play an audio file (WAV or MP3). Blocks until playback is complete."""
     _init_mixer()
-    sound = pygame.mixer.Sound(str(path))
-    sound.play()
-    pygame.time.wait(int(sound.get_length() * 1000))
+    pygame.mixer.music.load(str(path))
+    pygame.mixer.music.play()
+    while pygame.mixer.music.get_busy():
+        pygame.time.wait(50)
 
 
 def play_with_pause(path1: Path, pause_seconds: float, path2: Path) -> None:

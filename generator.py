@@ -1,4 +1,5 @@
 import json
+import re
 import anthropic
 from config import ANTHROPIC_API_KEY, MODEL, MAX_TOKENS, SYSTEM_PROMPT
 
@@ -28,15 +29,21 @@ def generate(trigger: str | None = None) -> dict:
         )
         return response.content[0].text.strip()
 
+    def strip_markdown(text: str) -> str:
+        """Strip markdown code fences from JSON response."""
+        text = text.strip()
+        match = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL)
+        return match.group(1) if match else text
+
     raw = call_api()
 
     try:
-        return json.loads(raw)
+        return json.loads(strip_markdown(raw))
     except json.JSONDecodeError:
         # Retry once
         raw = call_api()
         try:
-            return json.loads(raw)
+            return json.loads(strip_markdown(raw))
         except json.JSONDecodeError as e:
             raise ValueError(
                 f"Failed to parse achievement JSON after two attempts.\n"

@@ -3,44 +3,40 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-from TTS.api import TTS
+import numpy as np
+import soundfile as sf
+from pedalboard import Pedalboard, Chorus, Reverb, PitchShift, Gain, Bitcrush
+from pedalboard.io import AudioFile
 
-from config import REFERENCE_AUDIO_DIR, OUTPUT_DIR
+from elevenlabs.client import ElevenLabs
 
-# Auto-accept Coqui CPML license (non-commercial)
-os.environ["COQUI_TOS_AGREED"] = "1"
+from config import OUTPUT_DIR
 
-REFERENCE_MP3: Path = REFERENCE_AUDIO_DIR / "reference.mp3"
-REFERENCE_WAV: Path = REFERENCE_AUDIO_DIR / "reference.wav"
-MODEL_NAME: str = "tts_models/multilingual/multi-dataset/xtts_v2"
+ELEVENLABS_API_KEY: str = os.environ.get("ELEVENLABS_API_KEY", "")
+VOICE_ID: str = os.environ.get("ELEVENLABS_VOICE_ID", "dHd5gvgSOzSfduK4CvEg")
 
-# Module-level singleton — loaded once per session
-_tts: TTS | None = None
+# Module-level singleton
+_client: ElevenLabs | None = None
 
-
-def _get_tts() -> TTS:
-    """Return the cached TTS model, loading it on first call."""
-    global _tts
-    if _tts is None:
-        print("Loading XTTS v2 model — this may take a moment...")
-        _tts = TTS(model_name=MODEL_NAME)
-    return _tts
+# AI voice effect chain — split the difference
+_fx = Pedalboard([
+    Chorus(rate_hz=2.0, depth=0.25, mix=0.4, centre_delay_ms=7.0),
+    PitchShift(semitones=-1.0),
+    Bitcrush(bit_depth=11),
+    Reverb(room_size=0.25, damping=0.6, wet_level=0.2, dry_level=0.8),
+])
 
 
-def _ensure_reference_wav() -> Path:
-    """Convert reference MP3 to WAV if the WAV doesn't exist yet."""
-    if REFERENCE_WAV.exists():
-        return REFERENCE_WAV
-    if not REFERENCE_MP3.exists():
-        raise FileNotFoundError(
-            f"Reference audio not found. Place your voice sample at {REFERENCE_MP3}"
-        )
-    import soundfile as sf
-    import librosa
-
-    audio, sr = librosa.load(str(REFERENCE_MP3), sr=None)
-    sf.write(str(REFERENCE_WAV), audio, sr)
-    return REFERENCE_WAV
+def _get_client() -> ElevenLabs:
+    """Return the cached ElevenLabs client."""
+    global _client
+    if _client is None:
+        if not ELEVENLABS_API_KEY:
+            raise EnvironmentError(
+                "ELEVENLABS_API_KEY is not set. Add it to your environment."
+            )
+        _client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
+    return _client
 
 
 def _slugify(text: str) -> str:
@@ -49,24 +45,62 @@ def _slugify(text: str) -> str:
     return slug[:40] if slug else "clip"
 
 
-def synthesize(text: str, filename_hint: str = "") -> Path:
+def _apply_ai_effect(input_path: Path, output_path: Path, volume_ramp: bool = False, speed: float = 1.0, gain_db: float = 0.0) -> None:
+    """Apply robotic AI voice effect to an audio file."""
+    with AudioFile(str(input_path)) as f:
+        audio = f.read(f.frames)
+        sr = f.samplerate
+
+    processed = _fx(audio, sr)
+
+    if speed != 1.0:
+        import librosa
+        mono = processed[0] if processed.ndim > 1 else processed
+        stretched = librosa.effects.time_stretch(mono, rate=speed)
+        processed = stretched[np.newaxis, :]
+
+    if gain_db != 0.0:
+        gain_linear = 10 ** (gain_db / 20)
+        processed = processed * gain_linear
+
+    if volume_ramp:
+        num_samples = processed.shape[1]
+        ramp = np.linspace(0.4, 2.2, num_samples).astype(np.float32)
+        processed = processed * ramp[np.newaxis, :]
+
+    processed = np.clip(processed, -1.0, 1.0)
+
+    with AudioFile(str(output_path), "w", sr, processed.shape[0]) as f:
+        f.write(processed)
+
+
+def synthesize(text: str, filename_hint: str = "", volume_ramp: bool = False, speed: float = 1.0, gain_db: float = 0.0) -> Path:
     """
-    Synthesize text using the cloned voice.
+    Synthesize text using the ElevenLabs cloned voice with AI effect.
     text: the string to speak
     filename_hint: short slug used in the output filename
-    Returns Path to the generated WAV file in output/
+    volume_ramp: if True, audio builds from low to high volume
+    speed: playback speed multiplier (1.0 = normal, 1.15 = slightly faster)
+    Returns Path to the generated MP3 file in output/
     """
-    tts = _get_tts()
-    ref_wav = _ensure_reference_wav()
+    client = _get_client()
 
     slug = _slugify(filename_hint) if filename_hint else "clip"
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    out_path = OUTPUT_DIR / f"{timestamp}_{slug}.wav"
+    raw_path = OUTPUT_DIR / f"{timestamp}_{slug}_raw.mp3"
+    out_path = OUTPUT_DIR / f"{timestamp}_{slug}.mp3"
 
-    tts.tts_to_file(
+    audio = client.text_to_speech.convert(
+        voice_id=VOICE_ID,
         text=text,
-        speaker_wav=str(ref_wav),
-        language="en",
-        file_path=str(out_path),
+        model_id="eleven_multilingual_v2",
     )
+
+    with open(raw_path, "wb") as f:
+        for chunk in audio:
+            f.write(chunk)
+
+    _apply_ai_effect(raw_path, out_path, volume_ramp=volume_ramp, speed=speed, gain_db=gain_db)
+    raw_path.unlink()  # clean up raw file
+
     return out_path
