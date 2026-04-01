@@ -202,7 +202,10 @@ def test_root_redirects(client):
     assert "/static/index.html" in res.headers["location"]
 
 
-@patch("server.synthesize_achievement_parallel", return_value=["/fake/path/20260401_opener.wav", "/fake/path/20260401_reward.wav"])
+@patch(
+    "server.synthesize_achievement_parallel",
+    return_value=["/fake/path/20260401_opener.wav", "/fake/path/20260401_reward.wav"],
+)
 @patch("server.generate", return_value=SAMPLE_ACHIEVEMENT)
 def test_generate_returns_audio_urls(mock_gen, mock_synth, client):
     """POST /api/generate converts file paths to /audio/ URLs in SSE."""

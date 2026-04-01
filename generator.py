@@ -48,6 +48,5 @@ def generate(trigger: str | None = None) -> dict:
             return json.loads(strip_markdown(raw))
         except json.JSONDecodeError as e:
             raise ValueError(
-                f"Failed to parse achievement JSON after two attempts.\n"
-                f"Raw response:\n{raw}"
+                f"Failed to parse achievement JSON after two attempts.\nRaw response:\n{raw}"
             ) from e

@@ -20,22 +20,24 @@ _client: ElevenLabs | None = None
 # AI voice effect chain — tuned iteratively for a "robotic announcer" feel.
 # Values landed between two extremes: too subtle to hear (v1) and
 # too distorted to understand (v2). These are the sweet spot.
-_fx = Pedalboard([
-    Chorus(                     # Synthetic shimmer / doubling effect
-        rate_hz=2.0,            # modulation speed — 2Hz gives a gentle wobble
-        depth=0.25,             # 25% pitch variation — audible but not warbling
-        mix=0.4,                # 40% wet — noticeable without drowning the voice
-        centre_delay_ms=7.0,    # 7ms base delay — short enough to sound cohesive
-    ),
-    PitchShift(semitones=-1.0), # Drop 1 semitone — adds gravitas without sounding unnatural
-    Bitcrush(bit_depth=11),     # 11-bit — subtle digital grit, not lo-fi (8-bit was too much)
-    Reverb(                     # Metallic "AI booth" ambiance
-        room_size=0.25,         # small room — tight, not cavernous
-        damping=0.6,            # absorbs highs — prevents tinny ringing
-        wet_level=0.2,          # 20% reverb — present but not washy
-        dry_level=0.8,          # 80% dry signal preserved
-    ),
-])
+_fx = Pedalboard(
+    [
+        Chorus(  # Synthetic shimmer / doubling effect
+            rate_hz=2.0,  # modulation speed — 2Hz gives a gentle wobble
+            depth=0.25,  # 25% pitch variation — audible but not warbling
+            mix=0.4,  # 40% wet — noticeable without drowning the voice
+            centre_delay_ms=7.0,  # 7ms base delay — short enough to sound cohesive
+        ),
+        PitchShift(semitones=-1.0),  # Drop 1 semitone — adds gravitas without sounding unnatural
+        Bitcrush(bit_depth=11),  # 11-bit — subtle digital grit, not lo-fi (8-bit was too much)
+        Reverb(  # Metallic "AI booth" ambiance
+            room_size=0.25,  # small room — tight, not cavernous
+            damping=0.6,  # absorbs highs — prevents tinny ringing
+            wet_level=0.2,  # 20% reverb — present but not washy
+            dry_level=0.8,  # 80% dry signal preserved
+        ),
+    ]
+)
 
 
 def _get_client() -> ElevenLabs:
@@ -43,9 +45,7 @@ def _get_client() -> ElevenLabs:
     global _client
     if _client is None:
         if not ELEVENLABS_API_KEY:
-            raise OSError(
-                "ELEVENLABS_API_KEY is not set. Add it to your environment."
-            )
+            raise OSError("ELEVENLABS_API_KEY is not set. Add it to your environment.")
         _client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
     return _client
 
@@ -56,7 +56,13 @@ def _slugify(text: str) -> str:
     return slug[:40] if slug else "clip"
 
 
-def _apply_ai_effect(input_path: Path, output_path: Path, volume_ramp: bool = False, speed: float = 1.0, gain_db: float = 0.0) -> None:
+def _apply_ai_effect(
+    input_path: Path,
+    output_path: Path,
+    volume_ramp: bool = False,
+    speed: float = 1.0,
+    gain_db: float = 0.0,
+) -> None:
     """Apply robotic AI voice effect to an audio file. Outputs WAV for clean playback."""
     with AudioFile(str(input_path)) as f:
         audio = f.read(f.frames)
@@ -66,6 +72,7 @@ def _apply_ai_effect(input_path: Path, output_path: Path, volume_ramp: bool = Fa
 
     if speed != 1.0:
         import librosa
+
         mono = processed[0] if processed.ndim > 1 else processed
         stretched = librosa.effects.time_stretch(mono, rate=speed)
         processed = stretched[np.newaxis, :]
@@ -98,7 +105,13 @@ def _expand_for_tts(text: str) -> str:
     return text
 
 
-def synthesize(text: str, filename_hint: str = "", volume_ramp: bool = False, speed: float = 1.0, gain_db: float = 0.0) -> Path:
+def synthesize(
+    text: str,
+    filename_hint: str = "",
+    volume_ramp: bool = False,
+    speed: float = 1.0,
+    gain_db: float = 0.0,
+) -> Path:
     """
     Synthesize text using the ElevenLabs cloned voice with AI effect.
     text: the string to speak

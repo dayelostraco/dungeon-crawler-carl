@@ -30,11 +30,13 @@ def prepare_data():
     from tqdm import tqdm
     from TTS.tts.layers.xtts.tokenizer import multilingual_cleaners
 
-    audio_files = sorted([
-        str(REFERENCE_AUDIO_DIR / f)
-        for f in os.listdir(REFERENCE_AUDIO_DIR)
-        if f.endswith(".mp3") and f != "reference.mp3"
-    ])
+    audio_files = sorted(
+        [
+            str(REFERENCE_AUDIO_DIR / f)
+            for f in os.listdir(REFERENCE_AUDIO_DIR)
+            if f.endswith(".mp3") and f != "reference.mp3"
+        ]
+    )
 
     print(f"Found {len(audio_files)} audio files")
 
@@ -72,7 +74,9 @@ def prepare_data():
                     sentence_start = max(sentence_start - buffer, 0)
                 else:
                     previous_word_end = words_list[word_idx - 1].end
-                    sentence_start = max(sentence_start - buffer, (previous_word_end + sentence_start) / 2)
+                    sentence_start = max(
+                        sentence_start - buffer, (previous_word_end + sentence_start) / 2
+                    )
                 sentence = word.word
                 first_word = False
             else:
@@ -96,7 +100,7 @@ def prepare_data():
                 i += 1
                 first_word = True
 
-                audio_chunk = wav[int(sr * sentence_start):int(sr * word_end)].unsqueeze(0)
+                audio_chunk = wav[int(sr * sentence_start) : int(sr * word_end)].unsqueeze(0)
                 if audio_chunk.size(-1) >= sr / 3:
                     torchaudio.save(abs_path, audio_chunk, sr)
                     metadata["audio_file"].append(audio_file)
@@ -135,6 +139,7 @@ def train():
         return
 
     import pandas as pd
+
     train_df = pd.read_csv(train_csv, sep="|")
     print(f"Training on {len(train_df)} samples")
 
@@ -274,6 +279,7 @@ def test():
     sf.write(str(OUTPUT_DIR / "ft_test_reward_final.wav"), reward, 24000)
 
     from player import play_with_pause
+
     print("Playing...")
     play_with_pause(
         OUTPUT_DIR / "ft_test_desc_combined.wav",

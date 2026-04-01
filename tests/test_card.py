@@ -58,7 +58,7 @@ def test_render_card_long_reward():
         "title": "Test",
         "description": "Short desc.",
         "reward": "This is a very long reward text that should wrap across multiple lines "
-                  "without causing any rendering issues or crashes in the card generator.",
+        "without causing any rendering issues or crashes in the card generator.",
     }
     data = render_card(achievement)
     img = Image.open(BytesIO(data))

@@ -10,13 +10,13 @@ from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
 
 # Colors matching the web UI
-BG_COLOR = (26, 26, 46)        # #1a1a2e
-CARD_BG = (22, 33, 62)         # #16213e
-GOLD = (240, 192, 64)          # #f0c040
-TEXT_COLOR = (224, 224, 224)    # #e0e0e0
-DIM_TEXT = (136, 136, 136)     # #888888
+BG_COLOR = (26, 26, 46)  # #1a1a2e
+CARD_BG = (22, 33, 62)  # #16213e
+GOLD = (240, 192, 64)  # #f0c040
+TEXT_COLOR = (224, 224, 224)  # #e0e0e0
+DIM_TEXT = (136, 136, 136)  # #888888
 BORDER_COLOR = (240, 192, 64)  # #f0c040
-DIVIDER_COLOR = (51, 51, 51)   # #333333
+DIVIDER_COLOR = (51, 51, 51)  # #333333
 
 # Render at 3x for crisp text — final image is 2400px wide
 SCALE = 3
@@ -59,7 +59,7 @@ def render_card(achievement: dict) -> bytes:
     # Strip announcer tags from description for display
     desc_clean = description
     if desc_clean.lower().startswith("new achievement!"):
-        desc_clean = desc_clean[len("new achievement!"):].strip()
+        desc_clean = desc_clean[len("new achievement!") :].strip()
     if desc_clean.lower().endswith("your reward!"):
         desc_clean = desc_clean[: -len("your reward!")].strip()
 
@@ -80,18 +80,18 @@ def render_card(achievement: dict) -> bytes:
     line_height_reward = _s(26)
     card_height = (
         CARD_PADDING
-        + _s(30)                                    # header badge
-        + _s(20)                                    # gap
-        + _s(36)                                    # title
-        + _s(20)                                    # gap
-        + len(desc_lines) * line_height_body        # description
-        + _s(24)                                    # gap
-        + _s(2)                                     # divider
-        + _s(20)                                    # gap
-        + _s(24)                                    # REWARD label
-        + len(reward_lines) * line_height_reward    # reward
-        + _s(30)                                    # gap
-        + _s(16)                                    # watermark
+        + _s(30)  # header badge
+        + _s(20)  # gap
+        + _s(36)  # title
+        + _s(20)  # gap
+        + len(desc_lines) * line_height_body  # description
+        + _s(24)  # gap
+        + _s(2)  # divider
+        + _s(20)  # gap
+        + _s(24)  # REWARD label
+        + len(reward_lines) * line_height_reward  # reward
+        + _s(30)  # gap
+        + _s(16)  # watermark
         + CARD_PADDING
     )
 

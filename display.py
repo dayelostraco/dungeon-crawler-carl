@@ -19,7 +19,7 @@ def print_achievement(achievement: dict) -> None:
     description: str = achievement.get("description", "")
     reward: str = achievement.get("reward", "")
 
-    top    = "╔" + "═" * (BOX_WIDTH - 2) + "╗"
+    top = "╔" + "═" * (BOX_WIDTH - 2) + "╗"
     middle = "║  ACHIEVEMENT UNLOCKED" + " " * (BOX_WIDTH - 24) + "║"
     bottom = "╚" + "═" * (BOX_WIDTH - 2) + "╝"
     divider = "─" * BOX_WIDTH

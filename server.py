@@ -17,9 +17,8 @@ from fastapi.responses import FileResponse, RedirectResponse, Response, Streamin
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from card import render_card
-
 import archive
+from card import render_card
 from config import OUTPUT_DIR, S3_BUCKET, STORAGE_MODE
 from generator import generate
 from synthesis import synthesize_achievement, synthesize_achievement_parallel
@@ -112,13 +111,16 @@ async def api_generate(req: GenerateRequest):
 
     async def event_stream():
         # Event 1: Achievement text — card renders immediately
-        yield _sse_event("achievement", {
-            "id": entry["id"],
-            "title": entry["title"],
-            "description": entry["description"],
-            "reward": entry["reward"],
-            "trigger": entry.get("trigger"),
-        })
+        yield _sse_event(
+            "achievement",
+            {
+                "id": entry["id"],
+                "title": entry["title"],
+                "description": entry["description"],
+                "reward": entry["reward"],
+                "trigger": entry.get("trigger"),
+            },
+        )
 
         # Phase 2: Synthesize audio in parallel (run in thread pool)
         audio_files = []
@@ -133,9 +135,12 @@ async def api_generate(req: GenerateRequest):
             logger.exception("Voice synthesis failed")
 
         # Event 2: Audio URLs — playback starts
-        yield _sse_event("audio", {
-            "audio_urls": _audio_urls(audio_files),
-        })
+        yield _sse_event(
+            "audio",
+            {
+                "audio_urls": _audio_urls(audio_files),
+            },
+        )
 
         # Event 3: Done
         yield _sse_event("done", {})

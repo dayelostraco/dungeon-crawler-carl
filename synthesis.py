@@ -24,8 +24,8 @@ SEGMENT_YOUR_REWARD = "your_reward"
 SEGMENT_REWARD = "reward"
 
 # Pause durations (seconds) — tuned for dramatic pacing
-PAUSE_BEFORE_TITLE = 0.3   # brief beat after "New Achievement!"
-PAUSE_AFTER_TITLE = 0.4    # let the title land before the description
+PAUSE_BEFORE_TITLE = 0.3  # brief beat after "New Achievement!"
+PAUSE_AFTER_TITLE = 0.4  # let the title land before the description
 PAUSE_BEFORE_REWARD = 0.6  # dramatic pause before the reward punchline
 
 
@@ -56,9 +56,7 @@ def _parse_segments(achievement: dict) -> list[tuple[str, dict]]:
     body = desc
     closer = None
 
-    opener_match = re.match(
-        r"(New Achievement!)\s*(.*)", body, flags=re.IGNORECASE | re.DOTALL
-    )
+    opener_match = re.match(r"(New Achievement!)\s*(.*)", body, flags=re.IGNORECASE | re.DOTALL)
     if opener_match:
         opener = opener_match.group(1).strip()
         body = opener_match.group(2).strip()

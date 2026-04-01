@@ -8,6 +8,7 @@ def test_defaults_without_env(monkeypatch):
     monkeypatch.delenv("MAX_TOKENS", raising=False)
 
     import config
+
     importlib.reload(config)
 
     assert config.MODEL == "claude-opus-4-5"
@@ -21,6 +22,7 @@ def test_env_vars_override(monkeypatch):
     monkeypatch.setenv("MAX_TOKENS", "800")
 
     import config
+
     importlib.reload(config)
 
     assert config.ANTHROPIC_API_KEY == "sk-test-key"
@@ -31,6 +33,7 @@ def test_env_vars_override(monkeypatch):
 def test_project_paths():
     """All configured paths are rooted in the project directory."""
     import config
+
     importlib.reload(config)
 
     assert config.PROJECT_ROOT == Path(config.__file__).parent
@@ -43,6 +46,7 @@ def test_project_paths():
 def test_directories_created():
     """Output, reference_audio, and transcripts dirs are created on import."""
     import config
+
     importlib.reload(config)
 
     assert config.OUTPUT_DIR.is_dir()
@@ -53,6 +57,7 @@ def test_directories_created():
 def test_system_prompt_present():
     """System prompt is a non-empty string with key phrases."""
     import config
+
     importlib.reload(config)
 
     assert isinstance(config.SYSTEM_PROMPT, str)

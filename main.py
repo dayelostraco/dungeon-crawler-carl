@@ -110,8 +110,7 @@ def main() -> None:
 
     if (args.speak or args.speak_only) and not os.environ.get("ELEVENLABS_API_KEY"):
         print(
-            "\nElevenLabs API key not found. "
-            "Set ELEVENLABS_API_KEY in your environment.\n",
+            "\nElevenLabs API key not found. Set ELEVENLABS_API_KEY in your environment.\n",
             file=sys.stderr,
         )
         sys.exit(1)

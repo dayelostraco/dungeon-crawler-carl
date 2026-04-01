@@ -182,7 +182,9 @@ def _dynamo_update_audio(entry_id: int, audio_files: list[str]) -> None:
 # ---------------------------------------------------------------------------
 
 
-def save(achievement: dict, trigger: str | None = None, audio_files: list[str] | None = None) -> dict:
+def save(
+    achievement: dict, trigger: str | None = None, audio_files: list[str] | None = None
+) -> dict:
     """Append an achievement to the archive. Returns the saved entry."""
     if STORAGE_MODE == "cloud":
         return _dynamo_save(achievement, trigger, audio_files)

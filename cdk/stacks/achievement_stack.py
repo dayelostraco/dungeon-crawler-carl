@@ -46,7 +46,8 @@ class AchievementStack(Stack):
 
         # --- VPC ---
         vpc = ec2.Vpc(
-            self, "Vpc",
+            self,
+            "Vpc",
             max_azs=2,
             nat_gateways=1,
         )
@@ -55,19 +56,22 @@ class AchievementStack(Stack):
         domain_name = "achievement.sigilark.com"
 
         hosted_zone = route53.HostedZone.from_lookup(
-            self, "Zone",
+            self,
+            "Zone",
             domain_name="sigilark.com",
         )
 
         certificate = acm.Certificate(
-            self, "Cert",
+            self,
+            "Cert",
             domain_name=domain_name,
             validation=acm.CertificateValidation.from_dns(hosted_zone),
         )
 
         # --- DynamoDB ---
         table = dynamodb.Table(
-            self, "AchievementsTable",
+            self,
+            "AchievementsTable",
             table_name="achievements",
             partition_key=dynamodb.Attribute(name="id", type=dynamodb.AttributeType.NUMBER),
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
@@ -76,7 +80,8 @@ class AchievementStack(Stack):
 
         # --- S3 ---
         bucket = s3.Bucket(
-            self, "AudioBucket",
+            self,
+            "AudioBucket",
             removal_policy=RemovalPolicy.RETAIN,
             auto_delete_objects=False,
             lifecycle_rules=[
@@ -93,22 +98,38 @@ class AchievementStack(Stack):
 
         # --- Secrets Manager (pre-created, referenced by name) ---
         anthropic_secret = secretsmanager.Secret.from_secret_name_v2(
-            self, "AnthropicKey", "achievement-intercom/anthropic-api-key",
+            self,
+            "AnthropicKey",
+            "achievement-intercom/anthropic-api-key",
         )
         elevenlabs_secret = secretsmanager.Secret.from_secret_name_v2(
-            self, "ElevenLabsKey", "achievement-intercom/elevenlabs-api-key",
+            self,
+            "ElevenLabsKey",
+            "achievement-intercom/elevenlabs-api-key",
         )
         elevenlabs_voice_secret = secretsmanager.Secret.from_secret_name_v2(
-            self, "ElevenLabsVoice", "achievement-intercom/elevenlabs-voice-id",
+            self,
+            "ElevenLabsVoice",
+            "achievement-intercom/elevenlabs-voice-id",
         )
 
         # --- Docker Image ---
         image_asset = ecr_assets.DockerImageAsset(
-            self, "AppImage",
+            self,
+            "AppImage",
             directory="..",
-            exclude=["cdk", "finetune_data", "finetune_output", ".venv",
-                      "reference_audio", "transcripts", "original_source",
-                      "output", ".git", "__pycache__"],
+            exclude=[
+                "cdk",
+                "finetune_data",
+                "finetune_output",
+                ".venv",
+                "reference_audio",
+                "transcripts",
+                "original_source",
+                "output",
+                ".git",
+                "__pycache__",
+            ],
         )
 
         # --- ECS Cluster ---
@@ -116,7 +137,8 @@ class AchievementStack(Stack):
 
         # --- Task Definition ---
         task_def = ecs.FargateTaskDefinition(
-            self, "TaskDef",
+            self,
+            "TaskDef",
             cpu=512,
             memory_limit_mib=1024,
         )
@@ -127,7 +149,8 @@ class AchievementStack(Stack):
 
         # --- Container ---
         log_group = logs.LogGroup(
-            self, "Logs",
+            self,
+            "Logs",
             retention=logs.RetentionDays.ONE_MONTH,
             removal_policy=RemovalPolicy.DESTROY,
         )
@@ -157,13 +180,15 @@ class AchievementStack(Stack):
 
         # --- ALB + Fargate Service ---
         alb = elbv2.ApplicationLoadBalancer(
-            self, "Alb",
+            self,
+            "Alb",
             vpc=vpc,
             internet_facing=True,
         )
 
         service = ecs.FargateService(
-            self, "Service",
+            self,
+            "Service",
             cluster=cluster,
             task_definition=task_def,
             desired_count=1,
@@ -203,7 +228,8 @@ class AchievementStack(Stack):
 
         # --- DNS Record ---
         route53.ARecord(
-            self, "DnsRecord",
+            self,
+            "DnsRecord",
             zone=hosted_zone,
             record_name="achievement",
             target=route53.RecordTarget.from_alias(targets.LoadBalancerTarget(alb)),
