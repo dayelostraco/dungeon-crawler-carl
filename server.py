@@ -1,5 +1,5 @@
 """
-Achievement Intercom — Web UI Server
+The Dungeon Intercom — Web UI Server
 
 Usage:
     uvicorn server:app --reload
@@ -22,7 +22,7 @@ from synthesis import synthesize_achievement
 
 logger = logging.getLogger("achievement-intercom")
 
-app = FastAPI(title="Achievement Intercom")
+app = FastAPI(title="The Dungeon Intercom")
 
 STATIC_DIR = Path(__file__).parent / "static"
 STATIC_DIR.mkdir(exist_ok=True)

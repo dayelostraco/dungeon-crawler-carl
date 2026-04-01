@@ -57,7 +57,7 @@ def test_system_prompt_present():
 
     assert isinstance(config.SYSTEM_PROMPT, str)
     assert len(config.SYSTEM_PROMPT) > 100
-    assert "Achievement Intercom" in config.SYSTEM_PROMPT
+    assert "Dungeon Intercom" in config.SYSTEM_PROMPT
     assert "New Achievement!" in config.SYSTEM_PROMPT
     assert "Your Reward!" in config.SYSTEM_PROMPT
     assert '"title"' in config.SYSTEM_PROMPT
