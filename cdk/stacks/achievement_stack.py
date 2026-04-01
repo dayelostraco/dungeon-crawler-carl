@@ -11,6 +11,9 @@ from aws_cdk import (
     aws_elasticloadbalancingv2 as elbv2,
     aws_logs as logs,
     aws_secretsmanager as secretsmanager,
+    aws_route53 as route53,
+    aws_route53_targets as targets,
+    aws_certificatemanager as acm,
 )
 
 
@@ -23,6 +26,20 @@ class AchievementStack(Stack):
             self, "Vpc",
             max_azs=2,
             nat_gateways=1,
+        )
+
+        # --- DNS + TLS ---
+        domain_name = "achievement.sigilark.com"
+
+        hosted_zone = route53.HostedZone.from_lookup(
+            self, "Zone",
+            domain_name="sigilark.com",
+        )
+
+        certificate = acm.Certificate(
+            self, "Cert",
+            domain_name=domain_name,
+            validation=acm.CertificateValidation.from_dns(hosted_zone),
         )
 
         # --- EFS ---
@@ -142,8 +159,24 @@ class AchievementStack(Stack):
         # Allow EFS access from ECS tasks
         file_system.connections.allow_default_port_from(service)
 
-        listener = alb.add_listener("Listener", port=80)
-        listener.add_targets(
+        # HTTP → HTTPS redirect
+        alb.add_listener(
+            "HttpRedirect",
+            port=80,
+            default_action=elbv2.ListenerAction.redirect(
+                protocol="HTTPS",
+                port="443",
+                permanent=True,
+            ),
+        )
+
+        # HTTPS listener with TLS
+        https_listener = alb.add_listener(
+            "HttpsListener",
+            port=443,
+            certificates=[certificate],
+        )
+        https_listener.add_targets(
             "EcsTarget",
             port=8000,
             targets=[service],
@@ -156,6 +189,15 @@ class AchievementStack(Stack):
             ),
         )
 
+        # --- DNS Record ---
+        route53.ARecord(
+            self, "DnsRecord",
+            zone=hosted_zone,
+            record_name="achievement",
+            target=route53.RecordTarget.from_alias(targets.LoadBalancerTarget(alb)),
+        )
+
         # --- Outputs ---
-        cdk.CfnOutput(self, "AlbUrl", value=f"http://{alb.load_balancer_dns_name}")
+        cdk.CfnOutput(self, "Url", value=f"https://{domain_name}")
+        cdk.CfnOutput(self, "AlbDns", value=alb.load_balancer_dns_name)
         cdk.CfnOutput(self, "EfsId", value=file_system.file_system_id)
