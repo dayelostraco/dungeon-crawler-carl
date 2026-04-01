@@ -102,6 +102,8 @@ def _expand_for_tts(text: str) -> str:
     # "-7" → "minus 7", "+3" → "plus 3" (stat boosts/penalties in rewards)
     text = re.sub(r"(?<!\w)\+(\d)", r"plus \1", text)
     text = re.sub(r"(?<!\w)-(\d)", r"minus \1", text)
+    # "one (1)" → "one" — remove parenthetical number duplicates
+    text = re.sub(r"(\w+)\s*\(\d+\)", r"\1", text)
     return text
 
 
