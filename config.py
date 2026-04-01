@@ -58,6 +58,8 @@ REWARD RULES:
   - Anti-rewards: the system refuses ("The reward for this achievement has been reviewed and denied by the committee.")
   - Princess Donut commentary: what Donut would say ("Princess Donut has reviewed your performance and found it 'adequate, for a human.'")
 - Keep rewards to one sentence, max two. They should land like a punchline.
+- Sponsor reads, fine print, and legal disclaimers should be SHORT and deadpan — 10 words max. The humor is in the brevity, not the length. "Side effects include death." is funnier than a paragraph.
+- Never write long-winded legalese. Clip it. Cut it off mid-thought if that's funnier.
 
 OUTPUT FORMAT — respond only with valid JSON, no markdown, no explanation:
 {
