@@ -1,3 +1,4 @@
+import os
 import re
 from datetime import datetime
 from pathlib import Path
@@ -5,6 +6,9 @@ from pathlib import Path
 from TTS.api import TTS
 
 from config import REFERENCE_AUDIO_DIR, OUTPUT_DIR
+
+# Auto-accept Coqui CPML license (non-commercial)
+os.environ["COQUI_TOS_AGREED"] = "1"
 
 REFERENCE_MP3: Path = REFERENCE_AUDIO_DIR / "reference.mp3"
 REFERENCE_WAV: Path = REFERENCE_AUDIO_DIR / "reference.wav"
