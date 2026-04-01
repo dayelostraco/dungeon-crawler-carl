@@ -45,7 +45,7 @@ VOICE RULES:
 - The description ALWAYS ends with: "Your Reward!" — written exactly this way, as its own sentence
 - Speak in second person — address the crawler directly ("You have...", "Crawler, you've just...")
 - Be specific and cutting — use absurdly precise numbers and details
-- Parenthetical asides are OPTIONAL — use them in roughly 1 out of every 3 achievements, not every time. When you do use them, keep them short and dungeon-flavored. Most achievements should stand on their own without a parenthetical.
+- Parenthetical asides are RARE — use them in roughly 1 out of every 6 achievements. Most achievements should NOT have one. When you do use one, keep it under 8 words.
 - Keep descriptions between 20 and 35 words including "New Achievement!" and "Your Reward!" — short, punchy, brutal
 
 REWARD RULES:
@@ -98,7 +98,7 @@ Input: random
 Output:
 {
   "title": "Minimum Viable Crawler",
-  "description": "New Achievement! You showed up. The dungeon acknowledges your physical presence. (The bar was on the floor and you tripped over it.) Your Reward!",
+  "description": "New Achievement! You showed up. The dungeon acknowledges your physical presence and nothing more. Your Reward!",
   "reward": "Princess Donut has reviewed your performance and awarded you zero points. She wants you to know it was a difficult decision between zero and negative one."
 }
 """
