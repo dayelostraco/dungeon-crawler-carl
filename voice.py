@@ -120,7 +120,7 @@ def synthesize(
     filename_hint: short slug used in the output filename
     volume_ramp: if True, audio builds from low to high volume
     speed: playback speed multiplier (1.0 = normal, 1.15 = slightly faster)
-    Returns Path to the generated WAV file in output/
+    Returns Path to the generated MP3 file in output/
     """
     text = _expand_for_tts(text)
     client = _get_client()
@@ -128,25 +128,39 @@ def synthesize(
     slug = _slugify(filename_hint) if filename_hint else "clip"
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     raw_path = OUTPUT_DIR / f"{timestamp}_{slug}_raw.mp3"
-    out_path = OUTPUT_DIR / f"{timestamp}_{slug}.wav"
+    processed_wav = OUTPUT_DIR / f"{timestamp}_{slug}_processed.wav"
+    out_path = OUTPUT_DIR / f"{timestamp}_{slug}.mp3"
 
+    # Turbo model — ~40% faster synthesis with comparable quality
     audio = client.text_to_speech.convert(
         voice_id=VOICE_ID,
         text=text,
-        model_id="eleven_multilingual_v2",
+        model_id="eleven_turbo_v2_5",
     )
 
     with open(raw_path, "wb") as f:
         for chunk in audio:
             f.write(chunk)
 
-    _apply_ai_effect(raw_path, out_path, volume_ramp=volume_ramp, speed=speed, gain_db=gain_db)
-    raw_path.unlink()  # clean up raw file
+    # Apply effects to WAV (lossless processing), then encode final output as MP3 (10x smaller)
+    _apply_ai_effect(raw_path, processed_wav, volume_ramp=volume_ramp, speed=speed, gain_db=gain_db)
+    raw_path.unlink()
+
+    _encode_mp3(processed_wav, out_path)
+    processed_wav.unlink()
 
     if STORAGE_MODE == "cloud":
         return _upload_to_s3(out_path)
 
     return out_path
+
+
+def _encode_mp3(wav_path: Path, mp3_path: Path) -> None:
+    """Encode a WAV file to MP3 for smaller file size (~10x reduction)."""
+    from pydub import AudioSegment
+
+    audio = AudioSegment.from_wav(str(wav_path))
+    audio.export(str(mp3_path), format="mp3", bitrate="128k")
 
 
 def _upload_to_s3(local_path: Path) -> str:
@@ -155,6 +169,7 @@ def _upload_to_s3(local_path: Path) -> str:
 
     s3 = boto3.client("s3")
     s3_key = f"audio/{local_path.name}"
-    s3.upload_file(str(local_path), S3_BUCKET, s3_key, ExtraArgs={"ContentType": "audio/wav"})
+    content_type = "audio/mpeg" if local_path.suffix == ".mp3" else "audio/wav"
+    s3.upload_file(str(local_path), S3_BUCKET, s3_key, ExtraArgs={"ContentType": content_type})
     local_path.unlink()
     return s3_key
