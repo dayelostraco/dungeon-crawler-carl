@@ -19,7 +19,7 @@ from pydantic import BaseModel
 
 import archive
 from card import render_card
-from config import OUTPUT_DIR, S3_BUCKET, STORAGE_MODE
+from config import CDN_DOMAIN, OUTPUT_DIR, S3_BUCKET, STORAGE_MODE
 from generator import generate
 from synthesis import (
     concatenate_audio,
@@ -44,9 +44,12 @@ def _audio_urls(audio_files: list[str]) -> list[str]:
     """Convert audio references to URLs for the frontend.
 
     Local mode: /audio/{filename} (served by this app).
-    Cloud mode: presigned S3 GET URLs (1-hour expiry, served by S3 directly).
+    Cloud mode with CDN: https://{CDN_DOMAIN}/{s3_key} (edge-cached, fast globally).
+    Cloud mode without CDN: presigned S3 GET URLs (1-hour expiry).
     """
     if STORAGE_MODE == "cloud":
+        if CDN_DOMAIN:
+            return [f"https://{CDN_DOMAIN}/{f}" for f in audio_files if f]
         import boto3
 
         s3 = boto3.client("s3")

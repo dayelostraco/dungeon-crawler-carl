@@ -21,6 +21,7 @@ DB_PATH: Path = Path(os.getenv("DB_PATH", str(PROJECT_ROOT / "achievements.db"))
 STORAGE_MODE: str = os.getenv("STORAGE_MODE", "local")
 DYNAMODB_TABLE: str = os.getenv("DYNAMODB_TABLE", "achievements")
 S3_BUCKET: str = os.getenv("S3_BUCKET", "achievement-intercom-audio")
+CDN_DOMAIN: str = os.getenv("CDN_DOMAIN", "")
 
 OUTPUT_DIR.mkdir(exist_ok=True)
 REFERENCE_AUDIO_DIR.mkdir(exist_ok=True)

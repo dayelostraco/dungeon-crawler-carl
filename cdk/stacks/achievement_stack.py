@@ -8,6 +8,12 @@ from aws_cdk import (
     aws_certificatemanager as acm,
 )
 from aws_cdk import (
+    aws_cloudfront as cloudfront,
+)
+from aws_cdk import (
+    aws_cloudfront_origins as origins,
+)
+from aws_cdk import (
     aws_dynamodb as dynamodb,
 )
 from aws_cdk import (
@@ -61,6 +67,14 @@ class AchievementStack(Stack):
             ],
         )
 
+        # --- VPC Gateway Endpoints (free) ---
+        # Route DynamoDB and S3 traffic through AWS internal network
+        # instead of the public internet. Shaves ~50-100ms per call.
+        vpc.add_gateway_endpoint(
+            "DynamoEndpoint", service=ec2.GatewayVpcEndpointAwsService.DYNAMODB
+        )
+        vpc.add_gateway_endpoint("S3Endpoint", service=ec2.GatewayVpcEndpointAwsService.S3)
+
         # --- DNS + TLS ---
         domain_name = "achievement.sigilark.com"
 
@@ -105,6 +119,18 @@ class AchievementStack(Stack):
             ],
         )
 
+        # --- CloudFront CDN for S3 audio ---
+        # Edge-cached audio delivery — faster downloads globally, free at low volume.
+        cdn = cloudfront.Distribution(
+            self,
+            "AudioCdn",
+            default_behavior=cloudfront.BehaviorOptions(
+                origin=origins.S3BucketOrigin.with_origin_access_control(bucket),
+                viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                cache_policy=cloudfront.CachePolicy.CACHING_OPTIMIZED,
+            ),
+        )
+
         # --- Secrets Manager (pre-created, referenced by name) ---
         anthropic_secret = secretsmanager.Secret.from_secret_name_v2(
             self,
@@ -127,7 +153,7 @@ class AchievementStack(Stack):
             self,
             "AppImage",
             directory="..",
-            platform=ecr_assets.Platform.LINUX_AMD64,  # x86_64 — avoids ARM library compat issues
+            platform=ecr_assets.Platform.LINUX_AMD64,
             exclude=[
                 "cdk",
                 "finetune_data",
@@ -149,8 +175,8 @@ class AchievementStack(Stack):
         task_def = ecs.FargateTaskDefinition(
             self,
             "TaskDef",
-            cpu=1024,  # 1 vCPU — pedalboard effects + parallel TTS need headroom
-            memory_limit_mib=2048,  # 2 GB
+            cpu=1024,
+            memory_limit_mib=2048,
             runtime_platform=ecs.RuntimePlatform(
                 cpu_architecture=ecs.CpuArchitecture.X86_64,
                 operating_system_family=ecs.OperatingSystemFamily.LINUX,
@@ -182,6 +208,7 @@ class AchievementStack(Stack):
                 "STORAGE_MODE": "cloud",
                 "DYNAMODB_TABLE": table.table_name,
                 "S3_BUCKET": bucket.bucket_name,
+                "CDN_DOMAIN": cdn.distribution_domain_name,
                 "OUTPUT_DIR": "/tmp/output",
             },
             secrets={
@@ -198,7 +225,7 @@ class AchievementStack(Stack):
             "Alb",
             vpc=vpc,
             internet_facing=True,
-            idle_timeout=Duration.seconds(120),  # SSE streams can take 30-60s for full generation
+            idle_timeout=Duration.seconds(120),
         )
 
         service = ecs.FargateService(
@@ -207,7 +234,7 @@ class AchievementStack(Stack):
             cluster=cluster,
             task_definition=task_def,
             desired_count=1,
-            assign_public_ip=True,  # required in public subnet (no NAT)
+            assign_public_ip=True,
             platform_version=ecs.FargatePlatformVersion.LATEST,
         )
 
@@ -254,4 +281,5 @@ class AchievementStack(Stack):
         cdk.CfnOutput(self, "Url", value=f"https://{domain_name}")
         cdk.CfnOutput(self, "TableName", value=table.table_name)
         cdk.CfnOutput(self, "BucketName", value=bucket.bucket_name)
+        cdk.CfnOutput(self, "CdnDomain", value=cdn.distribution_domain_name)
         cdk.CfnOutput(self, "AlbDns", value=alb.load_balancer_dns_name)
