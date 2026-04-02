@@ -1,4 +1,4 @@
-# The Dungeon Intercom
+# The Crawl Log
 
 The omnipresent announcement system of a reality-show dungeon. Describe what you did, and the intercom delivers a snarky achievement announcement — complete with title, biting description, and a reward that hurts. Speaks it aloud using a cloned voice with robotic AI effects while billions of alien viewers watch.
 
@@ -240,8 +240,8 @@ cdk deploy
 ### Local Docker test
 
 ```bash
-docker build -t dungeon-intercom .
-docker run -p 8000:8000 --env-file .env dungeon-intercom
+docker build -t crawl-log .
+docker run -p 8000:8000 --env-file .env crawl-log
 ```
 
 ---

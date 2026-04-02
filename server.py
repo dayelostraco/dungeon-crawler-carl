@@ -1,5 +1,5 @@
 """
-The Dungeon Intercom — Web UI Server
+The Crawl Log — Web UI Server
 
 Usage:
     uvicorn server:app --reload
@@ -35,7 +35,7 @@ from synthesis import (
 
 logger = logging.getLogger("achievement-intercom")
 
-app = FastAPI(title="The Dungeon Intercom")
+app = FastAPI(title="The Crawl Log")
 
 STATIC_DIR = Path(__file__).parent / "static"
 STATIC_DIR.mkdir(exist_ok=True)
@@ -133,8 +133,8 @@ def shared_achievement(entry_id: int, request: Request):
             f"  "
         )
         html = html.replace(
-            "<title>The Dungeon Intercom</title>",
-            f"<title>{title} — The Dungeon Intercom</title>\n  {og_tags}",
+            "<title>The Crawl Log</title>",
+            f"<title>{title} — The Crawl Log</title>\n  {og_tags}",
         )
 
     return HTMLResponse(content=html)

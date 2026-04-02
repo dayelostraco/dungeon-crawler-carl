@@ -54,7 +54,7 @@ All notable changes to this project will be documented in this file.
 - `archive.update_audio()` for updating audio files after streaming synthesis
 
 ### Changed
-- **Renamed to "The Dungeon Intercom"** — full Dungeon Crawler Carl universe integration
+- **Renamed to "The Crawl Log"** — full Dungeon Crawler Carl universe integration
 - **System prompt rewritten** — dungeon announcer persona with crawlers, sponsors, Princess Donut,
   alien viewers, loot boxes, and dungeon bureaucracy
 - Reward format diversified — reduced "Unlocked:" bias, added dungeon loot, sponsor reads,

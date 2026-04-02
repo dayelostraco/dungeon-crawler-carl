@@ -110,7 +110,7 @@ def test_generate_uses_system_prompt(mock_cls):
     generate()
 
     call_kwargs = client.messages.create.call_args[1]
-    assert "Dungeon Intercom" in call_kwargs["system"]
+    assert "Crawl Log" in call_kwargs["system"]
 
 
 @patch("generator.ANTHROPIC_API_KEY", "sk-test")

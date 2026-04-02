@@ -171,7 +171,7 @@ def render_card(achievement: dict) -> bytes:
     # Watermark
     draw.text(
         (x, y),
-        "The Dungeon Intercom \u2022 achievement.sigilark.com",
+        "The Crawl Log \u2022 achievement.sigilark.com",
         fill=DIM_TEXT,
         font=font_watermark,
     )
