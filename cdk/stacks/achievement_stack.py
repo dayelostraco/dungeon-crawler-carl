@@ -149,8 +149,8 @@ class AchievementStack(Stack):
         task_def = ecs.FargateTaskDefinition(
             self,
             "TaskDef",
-            cpu=512,
-            memory_limit_mib=1024,
+            cpu=1024,        # 1 vCPU — pedalboard effects + parallel TTS need headroom
+            memory_limit_mib=2048,  # 2 GB
             runtime_platform=ecs.RuntimePlatform(
                 cpu_architecture=ecs.CpuArchitecture.X86_64,
                 operating_system_family=ecs.OperatingSystemFamily.LINUX,
@@ -198,6 +198,7 @@ class AchievementStack(Stack):
             "Alb",
             vpc=vpc,
             internet_facing=True,
+            idle_timeout=Duration.seconds(120),  # SSE streams can take 30-60s for full generation
         )
 
         service = ecs.FargateService(

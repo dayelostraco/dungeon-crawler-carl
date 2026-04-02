@@ -151,6 +151,8 @@ async def api_generate(req: GenerateRequest):
         headers={
             "Cache-Control": "no-cache",
             "X-Accel-Buffering": "no",
+            "Transfer-Encoding": "chunked",
+            "Connection": "keep-alive",
         },
     )
 
