@@ -13,6 +13,7 @@ from datetime import datetime
 from pathlib import Path
 
 from pydub import AudioSegment
+from pydub.silence import detect_leading_silence
 
 from config import OUTPUT_DIR, PROJECT_ROOT, STORAGE_MODE
 from voice import synthesize, upload_to_s3
@@ -127,10 +128,21 @@ def synthesize_achievement_parallel(achievement: dict) -> list[str]:
     return results
 
 
+def _trim_silence(segment: AudioSegment, silence_thresh: int = -40) -> AudioSegment:
+    """Strip leading and trailing silence from an audio segment."""
+    lead = detect_leading_silence(segment, silence_threshold=silence_thresh)
+    trail = detect_leading_silence(segment.reverse(), silence_threshold=silence_thresh)
+    end = len(segment) - trail
+    return segment[lead:end] if lead < end else segment
+
+
 def concatenate_audio(audio_files: list[str]) -> str:
     """
     Stitch individual segment files into a single MP3 with silence gaps
     baked in for dramatic pacing. Returns path to the combined file.
+
+    Each segment is trimmed of ElevenLabs' natural leading/trailing silence
+    so only the explicit pause constants control inter-segment timing.
 
     Pause timing matches play_audio_sequence() and the frontend JS:
       opener → 300ms → title → 400ms → body → closer → 600ms → reward
@@ -139,7 +151,7 @@ def concatenate_audio(audio_files: list[str]) -> str:
 
     for path_str in audio_files:
         name = Path(path_str).name
-        segment = AudioSegment.from_file(path_str)
+        segment = _trim_silence(AudioSegment.from_file(path_str))
 
         if f"_{SEGMENT_TITLE}" in name:
             combined += AudioSegment.silent(duration=int(PAUSE_BEFORE_TITLE * 1000))
