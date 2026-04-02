@@ -93,6 +93,12 @@ def root():
     return RedirectResponse(url="/static/index.html")
 
 
+@app.get("/a/{entry_id}")
+def shared_achievement(entry_id: int):
+    """Serve the app with a deep link to a specific achievement."""
+    return FileResponse(str(STATIC_DIR / "index.html"))
+
+
 @app.post("/api/generate")
 async def api_generate(req: GenerateRequest):
     """Generate achievement with SSE streaming: text first, then audio."""

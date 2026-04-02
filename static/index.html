@@ -228,7 +228,8 @@
     <div class="card-desc" id="cardDesc"></div>
     <div class="card-reward"><strong>REWARD</strong> <span id="cardReward"></span></div>
     <div class="card-actions" id="cardActions" style="display:none;">
-      <button class="share-btn" id="shareBtn" onclick="handleShare()">Share Card</button>
+      <button class="share-btn" id="shareLinkBtn" onclick="handleShareLink()">Copy Link</button>
+      <button class="share-btn" id="shareBtn" onclick="handleShare()">Download Card</button>
     </div>
   </div>
 
@@ -314,11 +315,23 @@
 
     function handleShare() {
       if (!currentAchievementId) return;
-      /* Direct download — avoids async/gesture chain issues with Web Share API */
       const a = document.createElement('a');
       a.href = `/api/achievements/${currentAchievementId}/card.png`;
       a.download = `achievement_${currentAchievementId}.png`;
       a.click();
+    }
+
+    function handleShareLink() {
+      if (!currentAchievementId) return;
+      const url = `${window.location.origin}/a/${currentAchievementId}`;
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.getElementById('shareLinkBtn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy Link'; }, 2000);
+      }).catch(() => {
+        /* Fallback: prompt with the URL */
+        prompt('Share this link:', url);
+      });
     }
 
     function setStatus(text, pulsing = false) {
@@ -464,8 +477,18 @@
       if (e.key === 'Enter') handleGenerate();
     });
 
-    /* load history on page load */
+    /* Deep link: /a/{id} auto-loads and plays that achievement */
+    async function checkDeepLink() {
+      const match = window.location.pathname.match(/^\/a\/(\d+)$/);
+      if (!match) return;
+      const id = parseInt(match[1]);
+      unlockAudio();
+      await handleReplay(id);
+    }
+
+    /* load history on page load, then check for deep link */
     loadHistory();
+    checkDeepLink();
   </script>
 </body>
 </html>
