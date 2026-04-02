@@ -170,16 +170,22 @@
     .history-item .title { color: #f0c040; font-size: 0.85rem; }
     .history-item .trigger { color: #666; font-size: 0.75rem; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .history-empty { color: #555; font-size: 0.85rem; font-style: italic; }
-    .history-more {
-      color: #f0c040;
-      font-size: 0.8rem;
-      text-align: center;
-      padding: 0.6rem;
-      cursor: pointer;
+    .history-pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.8rem 0 0.2rem;
       border-top: 1px solid #333;
       margin-top: 0.3rem;
     }
-    .history-more:hover { text-decoration: underline; }
+    .page-btn {
+      color: #f0c040;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .page-btn:hover { text-decoration: underline; }
+    .page-info { color: #666; font-size: 0.75rem; }
 
     /* Mobile responsive */
     @media (max-width: 640px) {
@@ -414,33 +420,54 @@
       }
     }
 
-    let showAllHistory = false;
-    const HISTORY_LIMIT = 20;
+    const PAGE_SIZE = 10;
+    let historyPage = 0;
+    let allHistory = [];
 
     async function loadHistory() {
       try {
         const res = await fetch('/api/achievements');
-        const data = await res.json();
-        const list = document.getElementById('historyList');
+        allHistory = await res.json();
+        historyPage = 0;
+        renderHistoryPage();
+      } catch (err) {
+        console.error('Failed to load history', err);
+        return;
+      }
+    }
 
-        if (data.length === 0) {
-          list.innerHTML = '<p class="history-empty">No achievements yet. Go do something questionable.</p>';
-          return;
+    function renderHistoryPage() {
+      const list = document.getElementById('historyList');
+
+      if (allHistory.length === 0) {
+        list.innerHTML = '<p class="history-empty">No achievements yet. Go do something questionable.</p>';
+        return;
+      }
+
+      const start = historyPage * PAGE_SIZE;
+      const page = allHistory.slice(start, start + PAGE_SIZE);
+      const totalPages = Math.ceil(allHistory.length / PAGE_SIZE);
+
+      let html = page.map(e => `
+        <div class="history-item" onclick="handleReplay(${e.id})">
+          <span class="title">${e.title}</span>
+          <span class="trigger">${e.trigger || 'random'}</span>
+        </div>
+      `).join('');
+
+      if (totalPages > 1) {
+        html += '<div class="history-pagination">';
+        if (historyPage > 0) {
+          html += `<span class="page-btn" onclick="historyPage--;renderHistoryPage()">&laquo; Prev</span>`;
         }
-
-        const visible = showAllHistory ? data : data.slice(0, HISTORY_LIMIT);
-        let html = visible.map(e => `
-          <div class="history-item" onclick="handleReplay(${e.id})">
-            <span class="title">${e.title}</span>
-            <span class="trigger">${e.trigger || 'random'}</span>
-          </div>
-        `).join('');
-
-        if (!showAllHistory && data.length > HISTORY_LIMIT) {
-          html += `<div class="history-more" onclick="showAllHistory=true;loadHistory()">Show all ${data.length} achievements</div>`;
+        html += `<span class="page-info">${historyPage + 1} / ${totalPages}</span>`;
+        if (historyPage < totalPages - 1) {
+          html += `<span class="page-btn" onclick="historyPage++;renderHistoryPage()">Next &raquo;</span>`;
         }
+        html += '</div>';
+      }
 
-        list.innerHTML = html;
+      list.innerHTML = html;
       } catch (err) {
         console.error('Failed to load history', err);
       }
