@@ -121,24 +121,49 @@ def test_generate_synthesis_failure_still_returns(mock_gen, mock_synth, client):
 @patch("server.synthesize_achievement_parallel", return_value=[])
 @patch("server.generate", return_value=SAMPLE_ACHIEVEMENT)
 def test_achievements_list(mock_gen, mock_synth, client):
-    """GET /api/achievements returns archived entries."""
+    """GET /api/achievements returns paginated entries."""
     client.post("/api/generate", json={"trigger": "first"})
     client.post("/api/generate", json={"trigger": "second"})
 
     res = client.get("/api/achievements")
     assert res.status_code == 200
     data = res.json()
-    assert len(data) == 2
+    assert data["total"] == 2
+    assert len(data["items"]) == 2
+    assert data["page"] == 0
+    assert data["total_pages"] == 1
     # Most recent first
-    assert data[0]["trigger"] == "second"
-    assert data[1]["trigger"] == "first"
+    assert data["items"][0]["trigger"] == "second"
+    assert data["items"][1]["trigger"] == "first"
+
+
+@patch("server.synthesize_achievement_parallel", return_value=[])
+@patch("server.generate", return_value=SAMPLE_ACHIEVEMENT)
+def test_achievements_list_pagination(mock_gen, mock_synth, client):
+    """GET /api/achievements respects page and page_size params."""
+    for i in range(3):
+        client.post("/api/generate", json={"trigger": f"trigger_{i}"})
+
+    res = client.get("/api/achievements?page=0&page_size=2")
+    data = res.json()
+    assert len(data["items"]) == 2
+    assert data["total"] == 3
+    assert data["total_pages"] == 2
+
+    res2 = client.get("/api/achievements?page=1&page_size=2")
+    data2 = res2.json()
+    assert len(data2["items"]) == 1
+    assert data2["page"] == 1
 
 
 def test_achievements_list_empty(client):
-    """GET /api/achievements returns empty list when no achievements."""
+    """GET /api/achievements returns empty when no achievements."""
     res = client.get("/api/achievements")
     assert res.status_code == 200
-    assert res.json() == []
+    data = res.json()
+    assert data["total"] == 0
+    assert data["items"] == []
+    assert data["total_pages"] == 0
 
 
 @patch("server.synthesize_achievement", return_value=[])

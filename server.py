@@ -168,9 +168,19 @@ async def api_generate(req: GenerateRequest):
 
 
 @app.get("/api/achievements")
-def api_achievements():
+def api_achievements(page: int = 0, page_size: int = 10):
     entries = archive.load_all()
-    return [_entry_response(e) for e in reversed(entries)]
+    entries.reverse()  # most recent first
+    total = len(entries)
+    start = page * page_size
+    page_entries = entries[start : start + page_size]
+    return {
+        "items": [_entry_response(e) for e in page_entries],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": (total + page_size - 1) // page_size if total > 0 else 0,
+    }
 
 
 @app.get("/api/achievements/{entry_id}")

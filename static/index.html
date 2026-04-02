@@ -420,54 +420,40 @@
       }
     }
 
-    const PAGE_SIZE = 10;
     let historyPage = 0;
-    let allHistory = [];
 
-    async function loadHistory() {
+    async function loadHistory(page) {
+      if (page !== undefined) historyPage = page;
       try {
-        const res = await fetch('/api/achievements');
-        allHistory = await res.json();
-        historyPage = 0;
-        renderHistoryPage();
-      } catch (err) {
-        console.error('Failed to load history', err);
-        return;
-      }
-    }
+        const res = await fetch(`/api/achievements?page=${historyPage}&page_size=10`);
+        const data = await res.json();
+        const list = document.getElementById('historyList');
 
-    function renderHistoryPage() {
-      const list = document.getElementById('historyList');
-
-      if (allHistory.length === 0) {
-        list.innerHTML = '<p class="history-empty">No achievements yet. Go do something questionable.</p>';
-        return;
-      }
-
-      const start = historyPage * PAGE_SIZE;
-      const page = allHistory.slice(start, start + PAGE_SIZE);
-      const totalPages = Math.ceil(allHistory.length / PAGE_SIZE);
-
-      let html = page.map(e => `
-        <div class="history-item" onclick="handleReplay(${e.id})">
-          <span class="title">${e.title}</span>
-          <span class="trigger">${e.trigger || 'random'}</span>
-        </div>
-      `).join('');
-
-      if (totalPages > 1) {
-        html += '<div class="history-pagination">';
-        if (historyPage > 0) {
-          html += `<span class="page-btn" onclick="historyPage--;renderHistoryPage()">&laquo; Prev</span>`;
+        if (data.total === 0) {
+          list.innerHTML = '<p class="history-empty">No achievements yet. Go do something questionable.</p>';
+          return;
         }
-        html += `<span class="page-info">${historyPage + 1} / ${totalPages}</span>`;
-        if (historyPage < totalPages - 1) {
-          html += `<span class="page-btn" onclick="historyPage++;renderHistoryPage()">Next &raquo;</span>`;
-        }
-        html += '</div>';
-      }
 
-      list.innerHTML = html;
+        let html = data.items.map(e => `
+          <div class="history-item" onclick="handleReplay(${e.id})">
+            <span class="title">${e.title}</span>
+            <span class="trigger">${e.trigger || 'random'}</span>
+          </div>
+        `).join('');
+
+        if (data.total_pages > 1) {
+          html += '<div class="history-pagination">';
+          if (historyPage > 0) {
+            html += `<span class="page-btn" onclick="loadHistory(${historyPage - 1})">&laquo; Prev</span>`;
+          }
+          html += `<span class="page-info">${data.page + 1} / ${data.total_pages}</span>`;
+          if (historyPage < data.total_pages - 1) {
+            html += `<span class="page-btn" onclick="loadHistory(${historyPage + 1})">Next &raquo;</span>`;
+          }
+          html += '</div>';
+        }
+
+        list.innerHTML = html;
       } catch (err) {
         console.error('Failed to load history', err);
       }
