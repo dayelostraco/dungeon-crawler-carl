@@ -35,7 +35,11 @@ from synthesis import (
 
 logger = logging.getLogger("achievement-intercom")
 
-app = FastAPI(title="The Crawl Log")
+app = FastAPI(
+    title="The Crawl Log",
+    description="Dungeon Crawler Carl achievement system — API documentation",
+    version="1.1.0",
+)
 
 STATIC_DIR = Path(__file__).parent / "static"
 STATIC_DIR.mkdir(exist_ok=True)

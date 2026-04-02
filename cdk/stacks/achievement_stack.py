@@ -277,6 +277,28 @@ class AchievementStack(Stack):
             target=route53.RecordTarget.from_alias(targets.LoadBalancerTarget(alb)),
         )
 
+        # --- Billing Alarm ---
+        # Alert if monthly spend exceeds $75 (normal is ~$42)
+        from aws_cdk import aws_cloudwatch as cloudwatch
+        from aws_cdk import aws_sns as sns
+
+        sns.Topic(self, "BillingAlertTopic")
+        cloudwatch.Alarm(
+            self,
+            "BillingAlarm",
+            metric=cloudwatch.Metric(
+                namespace="AWS/Billing",
+                metric_name="EstimatedCharges",
+                dimensions_map={"Currency": "USD"},
+                statistic="Maximum",
+                period=Duration.hours(6),
+            ),
+            threshold=75,
+            evaluation_periods=1,
+            comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
+            alarm_description="Monthly AWS spend exceeded $75",
+        )
+
         # --- Outputs ---
         cdk.CfnOutput(self, "Url", value=f"https://{domain_name}")
         cdk.CfnOutput(self, "TableName", value=table.table_name)

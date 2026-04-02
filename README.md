@@ -1,6 +1,8 @@
 # The Crawl Log
 
-The omnipresent announcement system of a reality-show dungeon. Describe what you did, and the intercom delivers a snarky achievement announcement — complete with title, biting description, and a reward that hurts. Speaks it aloud using a cloned voice with robotic AI effects while billions of alien viewers watch.
+Your personal dungeon crawl log. Describe what you did, and the dungeon delivers a snarky achievement announcement — complete with title, badge, biting description, and a reward that hurts. Speaks it aloud using a cloned voice with robotic AI effects.
+
+*congratulations, you're still alive. for now.*
 
 Inspired by the dungeon announcer from the *Dungeon Crawler Carl* book series.
 
@@ -39,7 +41,8 @@ dungeon_crawler_carl/
 ├── reference_audio/      # Voice reference samples
 ├── transcripts/          # Transcript files
 ├── output/               # Generated audio files
-├── tests/                # Unit + integration tests (115 tests)
+├── tests/                # Unit + integration tests (138 tests)
+├── RUNBOOK.md            # Operations guide for production
 ├── ruff.toml             # Linting config
 ├── requirements.txt      # Production dependencies
 ├── .env.example          # Environment variable template
@@ -162,8 +165,9 @@ Voice synthesis uses the [ElevenLabs API](https://elevenlabs.io) with a post-pro
 
 ### Audio pipeline
 
-1. Text split into 5 segments: **opener** | **title** | **body** | **closer** | **reward**
+1. Text split into 5 segments: **opener** | **title** | **body** | **"REWARD?"** | **reward**
 2. Each segment synthesized via ElevenLabs `eleven_multilingual_v2` (parallel in web, sequential in CLI)
+   - Description uses native ElevenLabs 1.15x speed control
 3. AI effects applied per-segment via [pedalboard](https://github.com/spotify/pedalboard):
    - **Chorus** (2Hz, 25% depth) — synthetic shimmer
    - **Pitch shift** (-1.0 semitone) — gravitas
@@ -195,10 +199,10 @@ Achievements auto-save with dual-backend persistence:
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `ANTHROPIC_API_KEY` | Yes | — | Anthropic API key for Claude |
+| `ANTHROPIC_API_KEY` | Yes | — | Anthropic API key for Claude (Sonnet 4.5) |
 | `ELEVENLABS_API_KEY` | For voice | — | ElevenLabs API key for TTS |
 | `ELEVENLABS_VOICE_ID` | No | built-in default | ElevenLabs voice ID |
-| `MODEL` | No | `claude-opus-4-5` | Claude model |
+| `MODEL` | No | `claude-sonnet-4-5` | Claude model |
 | `MAX_TOKENS` | No | `400` | Max tokens for generation |
 | `STORAGE_MODE` | No | `local` | `local` (SQLite) or `cloud` (DynamoDB+S3) |
 | `DYNAMODB_TABLE` | Cloud only | `achievements` | DynamoDB table name |
@@ -211,7 +215,7 @@ Achievements auto-save with dual-backend persistence:
 
 ## AWS Deployment
 
-Deploys to ECS Fargate behind an ALB at `crawl.sigilark.com` using AWS CDK.
+Deploys to ECS Fargate behind an ALB at `crawl.sigilark.com` using AWS CDK. See [RUNBOOK.md](RUNBOOK.md) for operations guide.
 
 ### Architecture
 
@@ -247,6 +251,12 @@ docker run -p 8000:8000 --env-file .env crawl-log
 ---
 
 ## Development
+
+### API documentation
+
+Swagger UI available at `/docs` when the server is running:
+- Local: http://localhost:8000/docs
+- Production: https://crawl.sigilark.com/docs
 
 ### Run tests
 

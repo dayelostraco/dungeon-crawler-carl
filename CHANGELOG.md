@@ -2,6 +2,46 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2026-04-02
+
+### Renamed to "The Crawl Log"
+- App renamed from "The Dungeon Intercom" to "The Crawl Log" — your personal dungeon crawl log
+- Domain: achievement.sigilark.com → crawl.sigilark.com
+- Subtitle: "congratulations, you're still alive. for now."
+
+### Badge System
+- 54 Lucide SVG icons (MIT) — Claude picks a contextual badge for each achievement
+- Badges displayed on web card, history list, and share PNG (gold-tinted via cairosvg)
+- Categories: death, combat, rewards, dungeon, food, work, funny
+
+### Shareable Links
+- `/a/{id}` deep links with Open Graph meta tags for rich social previews
+- OG image uses the achievement card PNG with badge, trigger, date
+- Share button uses Web Share API on mobile, clipboard on desktop
+- Play button for audio on shared links and history replays
+
+### Model & Cost
+- Switched from Claude Opus 4.5 to Claude Sonnet 4.5 (~75% cheaper, comparable quality)
+- API cost per achievement: ~$0.01 (was ~$0.04)
+
+### Infrastructure
+- CloudWatch billing alarm at $75/month threshold
+- FastAPI Swagger docs at `/docs`
+
+### Documentation
+- RUNBOOK.md: operations guide — health checks, logs, redeploy, clear data, secrets, DR
+- README updated for all v1.1.0 changes
+
+### Testing
+- 138 tests (was 116): badge rendering, OG tags, pagination edges, archive badge field,
+  config prompt validation, Swagger availability
+
+### UI Polish
+- Achievement date in history list
+- Server-side pagination (10 per page)
+- Play/Share button spacing on mobile
+- Input field maxlength 200 characters
+
 ## [1.0.0] - 2026-04-02
 
 ### Production Release
