@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [1.0.0] - 2026-04-02
 
 ### Production Release
-- **Live at https://achievement.sigilark.com**
+- **Live at https://crawl.sigilark.com**
 
 ### Audio Pipeline Overhaul
 - Segments concatenated into single MP3 with baked-in dramatic pauses (~139KB)

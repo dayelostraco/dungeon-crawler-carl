@@ -160,6 +160,7 @@
       cursor: pointer;
     }
     .share-btn:hover { background: #f0c040; color: #1a1a2e; }
+    .play-btn { background: #f0c040; color: #1a1a2e; }
 
     .history { width: 100%; max-width: 600px; }
     .history h2 {
@@ -235,7 +236,7 @@
   <p class="subtitle">congratulations, you're still alive. for now.</p>
 
   <div class="input-row">
-    <input type="text" id="trigger" placeholder="e.g. took a 2 hour lunch and nobody noticed" />
+    <input type="text" id="trigger" placeholder="e.g. took a 2 hour lunch and nobody noticed" maxlength="200" />
     <button id="generate" onclick="handleGenerate()">Generate</button>
   </div>
 
@@ -254,6 +255,7 @@
     <div class="card-desc" id="cardDesc"></div>
     <div class="card-reward"><strong>REWARD</strong> <span id="cardReward"></span></div>
     <div class="card-actions" id="cardActions" style="display:none;">
+      <button class="share-btn play-btn" id="playBtn" onclick="handlePlayFromCard()" style="display:none;">Play</button>
       <button class="share-btn" id="shareLinkBtn" onclick="handleShareLink()">Share</button>
     </div>
   </div>
@@ -524,13 +526,37 @@
       if (e.key === 'Enter') handleGenerate();
     });
 
-    /* Deep link: /a/{id} auto-loads and plays that achievement */
+    let pendingAudioUrls = null;
+
+    async function handlePlayFromCard() {
+      unlockAudio();
+      const btn = document.getElementById('playBtn');
+      if (pendingAudioUrls && pendingAudioUrls.length > 0) {
+        btn.textContent = 'Playing...';
+        btn.disabled = true;
+        await playSequence(pendingAudioUrls);
+        btn.textContent = 'Play';
+        btn.disabled = false;
+      }
+    }
+
+    /* Deep link: /a/{id} loads the card and shows a Play button */
     async function checkDeepLink() {
       const match = window.location.pathname.match(/^\/a\/(\d+)$/);
       if (!match) return;
       const id = parseInt(match[1]);
-      unlockAudio();
-      await handleReplay(id);
+      try {
+        const res = await fetch(`/api/achievements/${id}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        showCard(data);
+        if (data.audio_urls && data.audio_urls.length > 0) {
+          pendingAudioUrls = data.audio_urls;
+          document.getElementById('playBtn').style.display = 'inline-block';
+        }
+      } catch (err) {
+        console.error('Deep link failed', err);
+      }
     }
 
     /* load history on page load, then check for deep link */

@@ -211,7 +211,7 @@ Achievements auto-save with dual-backend persistence:
 
 ## AWS Deployment
 
-Deploys to ECS Fargate behind an ALB at `achievement.sigilark.com` using AWS CDK.
+Deploys to ECS Fargate behind an ALB at `crawl.sigilark.com` using AWS CDK.
 
 ### Architecture
 

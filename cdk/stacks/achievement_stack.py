@@ -76,7 +76,7 @@ class AchievementStack(Stack):
         vpc.add_gateway_endpoint("S3Endpoint", service=ec2.GatewayVpcEndpointAwsService.S3)
 
         # --- DNS + TLS ---
-        domain_name = "achievement.sigilark.com"
+        domain_name = "crawl.sigilark.com"
 
         hosted_zone = route53.HostedZone.from_lookup(
             self,
@@ -273,7 +273,7 @@ class AchievementStack(Stack):
             self,
             "DnsRecord",
             zone=hosted_zone,
-            record_name="achievement",
+            record_name="crawl",
             target=route53.RecordTarget.from_alias(targets.LoadBalancerTarget(alb)),
         )
 
