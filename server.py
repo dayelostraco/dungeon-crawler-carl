@@ -175,18 +175,20 @@ def api_achievement(entry_id: int):
     if not entry:
         raise HTTPException(status_code=404, detail="Achievement not found")
 
-    if entry.get("audio_files"):
-        # In cloud mode, audio_files are S3 keys — don't check os.path.exists
-        if STORAGE_MODE == "local":
-            existing = [f for f in entry["audio_files"] if os.path.exists(f)]
-        else:
-            existing = entry["audio_files"]  # trust S3 keys exist
-        if not existing:
-            try:
-                entry["audio_files"] = synthesize_achievement(entry)
-            except Exception:
-                logger.exception("Re-synthesis failed for entry %d", entry_id)
-                entry["audio_files"] = []
+    # Re-synthesize and concatenate if audio is missing or empty
+    has_audio = entry.get("audio_files") and len(entry["audio_files"]) > 0
+    if has_audio and STORAGE_MODE == "local":
+        has_audio = any(os.path.exists(f) for f in entry["audio_files"])
+
+    if not has_audio:
+        try:
+            segments = synthesize_achievement(entry)
+            combined = concatenate_audio(segments)
+            entry["audio_files"] = [combined]
+            archive.update_audio(entry_id, entry["audio_files"])
+        except Exception:
+            logger.exception("Re-synthesis failed for entry %d", entry_id)
+            entry["audio_files"] = []
 
     return _entry_response(entry)
 
