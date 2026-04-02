@@ -159,6 +159,16 @@
     .history-item .title { color: #f0c040; font-size: 0.85rem; }
     .history-item .trigger { color: #666; font-size: 0.75rem; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .history-empty { color: #555; font-size: 0.85rem; font-style: italic; }
+    .history-more {
+      color: #f0c040;
+      font-size: 0.8rem;
+      text-align: center;
+      padding: 0.6rem;
+      cursor: pointer;
+      border-top: 1px solid #333;
+      margin-top: 0.3rem;
+    }
+    .history-more:hover { text-decoration: underline; }
 
     /* Mobile responsive */
     @media (max-width: 640px) {
@@ -392,6 +402,9 @@
       }
     }
 
+    let showAllHistory = false;
+    const HISTORY_LIMIT = 20;
+
     async function loadHistory() {
       try {
         const res = await fetch('/api/achievements');
@@ -403,12 +416,19 @@
           return;
         }
 
-        list.innerHTML = data.map(e => `
+        const visible = showAllHistory ? data : data.slice(0, HISTORY_LIMIT);
+        let html = visible.map(e => `
           <div class="history-item" onclick="handleReplay(${e.id})">
             <span class="title">${e.title}</span>
             <span class="trigger">${e.trigger || 'random'}</span>
           </div>
         `).join('');
+
+        if (!showAllHistory && data.length > HISTORY_LIMIT) {
+          html += `<div class="history-more" onclick="showAllHistory=true;loadHistory()">Show all ${data.length} achievements</div>`;
+        }
+
+        list.innerHTML = html;
       } catch (err) {
         console.error('Failed to load history', err);
       }
