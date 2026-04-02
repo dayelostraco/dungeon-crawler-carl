@@ -65,7 +65,7 @@ def test_parse_segments_body_text():
     segments = _parse_segments(FULL_ACHIEVEMENT)
     body = segments[2]
     assert body[0] == "You vanished for 120 minutes."
-    assert body[1]["speed"] == 1.15
+    assert "speed" not in body[1]  # natural speed, no override
     assert body[1]["gain_db"] == 3.0
 
 

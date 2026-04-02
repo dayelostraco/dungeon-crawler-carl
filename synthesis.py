@@ -76,7 +76,7 @@ def _parse_segments(achievement: dict) -> list[tuple[str, dict]]:
         segments.append((opener, {"filename_hint": SEGMENT_OPENER, "gain_db": 5.0}))
     if title:
         segments.append((title, {"filename_hint": SEGMENT_TITLE, "gain_db": 3.0}))
-    segments.append((body, {"filename_hint": SEGMENT_DESCRIPTION, "speed": 1.15, "gain_db": 3.0}))
+    segments.append((body, {"filename_hint": SEGMENT_DESCRIPTION, "gain_db": 3.0}))
     if closer:
         segments.append((closer, {"filename_hint": SEGMENT_YOUR_REWARD, "volume_ramp": True}))
     segments.append((achievement["reward"], {"filename_hint": SEGMENT_REWARD}))
