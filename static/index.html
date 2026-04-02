@@ -254,18 +254,9 @@
     }
 
     async function playSequence(urls) {
-      for (const url of urls) {
-        const name = url.split('/').pop().replace('.wav', '').replace('.mp3', '');
-        if (name.includes('_title')) {
-          await sleep(300);
-          await playAudio(url);
-          await sleep(400);
-        } else if (name.includes('_reward') && !name.includes('_your_reward')) {
-          await sleep(600);
-          await playAudio(url);
-        } else {
-          await playAudio(url);
-        }
+      /* Single concatenated file — pauses are baked into the audio */
+      if (urls.length > 0) {
+        await playAudio(urls[0]);
       }
     }
 

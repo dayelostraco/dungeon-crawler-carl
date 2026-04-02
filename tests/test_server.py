@@ -202,16 +202,14 @@ def test_root_redirects(client):
     assert "/static/index.html" in res.headers["location"]
 
 
+@patch("server.concatenate_audio", return_value="/fake/path/20260401_combined.mp3")
 @patch(
     "server.synthesize_achievement_parallel",
-    return_value=["/fake/path/20260401_opener.wav", "/fake/path/20260401_reward.wav"],
+    return_value=["/fake/path/20260401_opener.mp3", "/fake/path/20260401_reward.mp3"],
 )
 @patch("server.generate", return_value=SAMPLE_ACHIEVEMENT)
-def test_generate_returns_audio_urls(mock_gen, mock_synth, client):
-    """POST /api/generate converts file paths to /audio/ URLs in SSE."""
+def test_generate_returns_audio_urls(mock_gen, mock_synth, mock_concat, client):
+    """POST /api/generate returns a single concatenated audio URL in SSE."""
     res = client.post("/api/generate", json={"trigger": "test"})
     events = _parse_sse(res.text)
-    assert events["audio"]["audio_urls"] == [
-        "/audio/20260401_opener.wav",
-        "/audio/20260401_reward.wav",
-    ]
+    assert events["audio"]["audio_urls"] == ["/audio/20260401_combined.mp3"]

@@ -21,7 +21,11 @@ import archive
 from card import render_card
 from config import OUTPUT_DIR, S3_BUCKET, STORAGE_MODE
 from generator import generate
-from synthesis import synthesize_achievement, synthesize_achievement_parallel
+from synthesis import (
+    concatenate_audio,
+    synthesize_achievement,
+    synthesize_achievement_parallel,
+)
 
 logger = logging.getLogger("achievement-intercom")
 
@@ -122,23 +126,25 @@ async def api_generate(req: GenerateRequest):
             },
         )
 
-        # Phase 2: Synthesize audio in parallel (run in thread pool)
-        audio_files = []
+        # Phase 2: Synthesize audio in parallel, then concatenate into one file
+        combined_file = []
         try:
-            audio_files = await loop.run_in_executor(
+            segment_files = await loop.run_in_executor(
                 None, synthesize_achievement_parallel, achievement
             )
-            archive.update_audio(entry["id"], audio_files)
+            combined_path = await loop.run_in_executor(None, concatenate_audio, segment_files)
+            combined_file = [combined_path]
+            archive.update_audio(entry["id"], combined_file)
         except OSError as e:
             logger.warning("Voice synthesis skipped: %s", e)
         except Exception:
             logger.exception("Voice synthesis failed")
 
-        # Event 2: Audio URLs — playback starts
+        # Event 2: Single audio URL — one download, one play
         yield _sse_event(
             "audio",
             {
-                "audio_urls": _audio_urls(audio_files),
+                "audio_urls": _audio_urls(combined_file),
             },
         )
 

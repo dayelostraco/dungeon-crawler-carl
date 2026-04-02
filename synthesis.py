@@ -9,8 +9,12 @@ the web server (server.py).
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from pathlib import Path
 
+from pydub import AudioSegment
+
+from config import OUTPUT_DIR
 from voice import synthesize
 
 # Filename hints double as segment identifiers. The pause logic in both
@@ -101,6 +105,37 @@ def synthesize_achievement_parallel(achievement: dict) -> list[str]:
         results = list(executor.map(_synth, segments))
 
     return results
+
+
+def concatenate_audio(audio_files: list[str]) -> str:
+    """
+    Stitch individual segment files into a single MP3 with silence gaps
+    baked in for dramatic pacing. Returns path to the combined file.
+
+    Pause timing matches play_audio_sequence() and the frontend JS:
+      opener → 300ms → title → 400ms → body → closer → 600ms → reward
+    """
+    combined = AudioSegment.empty()
+
+    for path_str in audio_files:
+        name = Path(path_str).name
+        segment = AudioSegment.from_file(path_str)
+
+        if f"_{SEGMENT_TITLE}" in name:
+            combined += AudioSegment.silent(duration=int(PAUSE_BEFORE_TITLE * 1000))
+            combined += segment
+            combined += AudioSegment.silent(duration=int(PAUSE_AFTER_TITLE * 1000))
+        elif f"_{SEGMENT_REWARD}" in name and f"_{SEGMENT_YOUR_REWARD}" not in name:
+            combined += AudioSegment.silent(duration=int(PAUSE_BEFORE_REWARD * 1000))
+            combined += segment
+        else:
+            combined += segment
+
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    out_path = OUTPUT_DIR / f"{timestamp}_combined.mp3"
+    combined.export(str(out_path), format="mp3", bitrate="128k")
+
+    return str(out_path)
 
 
 def play_audio_sequence(audio_files: list[str]) -> None:
