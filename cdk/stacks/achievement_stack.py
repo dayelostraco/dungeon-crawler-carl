@@ -149,7 +149,7 @@ class AchievementStack(Stack):
         task_def = ecs.FargateTaskDefinition(
             self,
             "TaskDef",
-            cpu=1024,        # 1 vCPU — pedalboard effects + parallel TTS need headroom
+            cpu=1024,  # 1 vCPU — pedalboard effects + parallel TTS need headroom
             memory_limit_mib=2048,  # 2 GB
             runtime_platform=ecs.RuntimePlatform(
                 cpu_architecture=ecs.CpuArchitecture.X86_64,
