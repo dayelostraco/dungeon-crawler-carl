@@ -2,6 +2,47 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0] - 2026-04-02
+
+### Production Release
+- **Live at https://achievement.sigilark.com**
+
+### Audio Pipeline Overhaul
+- Segments concatenated into single MP3 with baked-in dramatic pauses (~139KB)
+  - Eliminates mobile autoplay issues (one play() call, not five)
+  - Faster download: one HTTP request instead of five
+  - Sample-accurate pause timing between segments
+- ElevenLabs native speed control (`el_speed` parameter) replaces librosa time_stretch
+  - Description at 1.15x native speed — clean, no artifacts
+  - All other segments at natural 1.0x
+- "REWARD?" TTS text override — caps for energy, question mark for inflection
+- MP3 output via pydub (was WAV) — 10x smaller files
+- 500ms pause between description and "REWARD?" for dramatic pacing
+- Reverted to `eleven_multilingual_v2` model (turbo model degraded quality)
+
+### Web UI Improvements
+- Achievement date displayed on card and shareable PNG
+- Trigger text shown on card (what the user typed)
+- Mobile responsive layout (stacked under 640px, larger touch targets)
+- History limited to 20 most recent with "Show all" link
+- Shared Audio element for mobile playback gesture chain
+
+### Infrastructure
+- **CI/CD pipeline** — GitHub Actions: lint → test → docker → auto-deploy on push to main
+- **VPC Gateway Endpoints** for DynamoDB and S3 (free, ~50-100ms faster)
+- **CloudFront CDN** for S3 audio delivery (edge-cached, free at low volume)
+- ECS Fargate bumped to 1 vCPU / 2GB RAM
+- ALB idle timeout increased to 120s for SSE streams
+- x86_64 Fargate (ARM64 had pedalboard library compat issues)
+- Public subnets, no NAT gateway (saves ~$32/month)
+
+### Code Quality
+- 115 tests (was 102): added synthesis integration tests, TTS expansion tests
+- Fixed cloud audio re-synthesis bug (os.path.exists on S3 keys)
+- Fixed replay for achievements with empty audio_files
+- TTS text expansion: parenthetical numbers `one (1)` → `one`
+- Prompt tuning: reduced viewer count references, enabled crawler mortality humor
+
 ## [0.7.0] - 2026-04-01
 
 ### Added

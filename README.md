@@ -39,7 +39,7 @@ dungeon_crawler_carl/
 ├── reference_audio/      # Voice reference samples
 ├── transcripts/          # Transcript files
 ├── output/               # Generated audio files
-├── tests/                # Unit tests (64 tests)
+├── tests/                # Unit + integration tests (115 tests)
 ├── ruff.toml             # Linting config
 ├── requirements.txt      # Production dependencies
 ├── .env.example          # Environment variable template
@@ -102,10 +102,11 @@ uvicorn server:app --reload
 
 - Dark-themed dungeon aesthetic with gold accents
 - Text input — describe what you did, crawler
-- **SSE streaming** — achievement card appears in ~5s, audio follows ~6s later
-- **Parallel TTS** — 5 audio segments synthesized simultaneously
-- **Shareable achievement cards** — download a high-DPI PNG to share
-- Achievement history with click-to-replay (cached audio, no re-synthesis)
+- **SSE streaming** — achievement card appears in ~5s, audio follows after parallel synthesis
+- **Parallel TTS** — 5 audio segments synthesized simultaneously, concatenated into single MP3
+- **Shareable achievement cards** — high-DPI PNG download with trigger text and date
+- Achievement history (most recent 20) with click-to-replay from cached audio
+- Mobile responsive layout with touch-optimized controls
 - Progressive status: "Summoning achievement..." → "Synthesizing audio..." → "Playing..."
 
 ---
@@ -162,8 +163,8 @@ Voice synthesis uses the [ElevenLabs API](https://elevenlabs.io) with a post-pro
 ### Audio pipeline
 
 1. Text split into 5 segments: **opener** | **title** | **body** | **closer** | **reward**
-2. Each segment synthesized via ElevenLabs (parallel in web, sequential in CLI)
-3. AI effects applied per-segment:
+2. Each segment synthesized via ElevenLabs `eleven_multilingual_v2` (parallel in web, sequential in CLI)
+3. AI effects applied per-segment via [pedalboard](https://github.com/spotify/pedalboard):
    - **Chorus** (2Hz, 25% depth) — synthetic shimmer
    - **Pitch shift** (-1.0 semitone) — gravitas
    - **Bitcrush** (11-bit) — digital grit
@@ -171,9 +172,11 @@ Voice synthesis uses the [ElevenLabs API](https://elevenlabs.io) with a post-pro
 4. Segment-specific processing:
    - **"New Achievement!"** — +5dB boost
    - **Title** — +3dB boost
-   - **Body** — 1.15x speed, +3dB
-   - **"Your Reward!"** — volume crescendo (40% → 220%)
-5. TTS text expansion: `+/-` symbols expanded to "plus"/"minus" for correct speech
+   - **Body** — ElevenLabs native 1.15x speed, +3dB
+   - **"REWARD?"** — TTS text override + volume crescendo (40% → 220%)
+5. All segments concatenated into a single MP3 with baked-in dramatic pauses
+6. TTS text expansion: `+/-` → "plus"/"minus", `one (1)` → `one`
+7. Final output encoded as MP3 (~139KB) for fast mobile delivery
 
 ---
 
@@ -200,6 +203,7 @@ Achievements auto-save with dual-backend persistence:
 | `STORAGE_MODE` | No | `local` | `local` (SQLite) or `cloud` (DynamoDB+S3) |
 | `DYNAMODB_TABLE` | Cloud only | `achievements` | DynamoDB table name |
 | `S3_BUCKET` | Cloud only | `achievement-intercom-audio` | S3 bucket for audio |
+| `CDN_DOMAIN` | Cloud only | — | CloudFront domain for edge-cached audio delivery |
 | `DB_PATH` | No | `./achievements.db` | SQLite database path |
 | `OUTPUT_DIR` | No | `./output` | Audio output directory |
 
@@ -212,10 +216,10 @@ Deploys to ECS Fargate behind an ALB at `achievement.sigilark.com` using AWS CDK
 ### Architecture
 
 ```
-Internet → ALB (HTTPS) → ECS Fargate (0.5 vCPU, 1GB) → Container (uvicorn :8000)
-                                                        ↳ DynamoDB (achievement metadata)
-                                                        ↳ S3 (audio cache, presigned URLs)
-                                                        ↳ Secrets Manager (API keys)
+Internet → ALB (HTTPS) → ECS Fargate (1 vCPU, 2GB) → Container (uvicorn :8000)
+                                                      ↳ DynamoDB (via VPC endpoint)
+                                                      ↳ S3 (via VPC endpoint) → CloudFront CDN
+                                                      ↳ Secrets Manager (API keys)
 ```
 
 ### Deploy
