@@ -175,12 +175,14 @@
       padding: 0.6rem 0.8rem;
       border-radius: 4px;
       cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
       margin-bottom: 0.3rem;
     }
     .history-item:hover { background: #16213e; }
+    .history-top-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
     .history-badge {
       width: 1rem;
       height: 1rem;
@@ -189,7 +191,7 @@
     }
     .history-item .title { color: #f0c040; font-size: 0.85rem; flex: 1; }
     .history-date { color: #555; font-size: 0.7rem; white-space: nowrap; }
-    .history-item .trigger { color: #666; font-size: 0.75rem; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .history-item .trigger { color: #666; font-size: 0.7rem; margin-top: 0.15rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .history-empty { color: #555; font-size: 0.85rem; font-style: italic; }
     .history-pagination {
       display: flex;
@@ -490,10 +492,12 @@
 
         let html = data.items.map(e => `
           <div class="history-item" onclick="handleReplay(${e.id})">
-            ${e.badge ? `<img class="history-badge" src="/static/badges/${e.badge}.svg" alt="">` : ''}
-            <span class="title">${e.title}</span>
-            <span class="history-date">${formatDate(e.timestamp)}</span>
-            <span class="trigger">${e.trigger || 'random'}</span>
+            <div class="history-top-row">
+              ${e.badge ? `<img class="history-badge" src="/static/badges/${e.badge}.svg" alt="">` : ''}
+              <span class="title">${e.title}</span>
+              <span class="history-date">${formatDate(e.timestamp)}</span>
+            </div>
+            <div class="trigger">${e.trigger || 'random'}</div>
           </div>
         `).join('');
 
