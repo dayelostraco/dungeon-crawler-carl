@@ -148,9 +148,9 @@
       color: #e0e0e0;
     }
     .card-reward strong { color: #f0c040; margin-right: 0.5rem; }
-    .card-actions { margin-top: 1rem; text-align: right; }
+    .card-actions { margin-top: 1rem; }
     .share-btn {
-      padding: 0.4rem 1rem;
+      padding: 0.5rem 1rem;
       background: transparent;
       color: #f0c040;
       border: 1px solid #f0c040;
@@ -158,9 +158,11 @@
       font-family: inherit;
       font-size: 0.8rem;
       cursor: pointer;
+      margin-left: 0.8rem;
     }
+    .share-btn:first-child { margin-left: 0; }
     .share-btn:hover { background: #f0c040; color: #1a1a2e; }
-    .play-btn { background: #f0c040; color: #1a1a2e; }
+    .play-btn { background: #f0c040; color: #1a1a2e; margin-bottom: 0.8rem; }
 
     .history { width: 100%; max-width: 600px; }
     .history h2 {
@@ -227,7 +229,8 @@
       .card-reward strong { display: block; margin-bottom: 0.3rem; }
       .history-item { flex-direction: column; align-items: flex-start; gap: 0.2rem; }
       .history-item .trigger { max-width: 100%; }
-      .share-btn { width: 100%; padding: 0.6rem; font-size: 0.85rem; }
+      .share-btn { display: block; width: 100%; padding: 0.8rem; font-size: 0.85rem; margin-left: 0; margin-bottom: 0.8rem; }
+      .share-btn:last-child { margin-bottom: 0; }
     }
   </style>
 </head>
@@ -322,6 +325,8 @@
 
     function showCard(data) {
       currentAchievementId = data.id;
+      pendingAudioUrls = null;
+      document.getElementById('playBtn').style.display = 'none';
       document.getElementById('cardDate').textContent = formatDate(data.timestamp);
       const badgeEl = document.getElementById('cardBadge');
       if (data.badge) {
@@ -442,8 +447,13 @@
               input.value = '';
             } else if (evt.event === 'audio') {
               if (evt.data.audio_urls && evt.data.audio_urls.length > 0) {
-                setStatus('Playing audio...', true);
-                await playSequence(evt.data.audio_urls);
+                pendingAudioUrls = evt.data.audio_urls;
+                document.getElementById('playBtn').style.display = 'inline-block';
+                /* Try auto-play (works if gesture chain intact), show Play button as fallback */
+                try {
+                  setStatus('Playing audio...', true);
+                  await playSequence(evt.data.audio_urls);
+                } catch (e) { /* Play button is there as fallback */ }
               }
               setStatus('');
             } else if (evt.event === 'done') {
@@ -467,12 +477,14 @@
         const data = await res.json();
 
         showCard(data);
-        setStatus('Playing audio...', true);
 
         if (data.audio_urls && data.audio_urls.length > 0) {
-          await playSequence(data.audio_urls);
+          pendingAudioUrls = data.audio_urls;
+          document.getElementById('playBtn').style.display = 'inline-block';
+          setStatus('');
+        } else {
+          setStatus('');
         }
-        setStatus('');
       } catch (err) {
         setStatus('Error: ' + err.message);
       }

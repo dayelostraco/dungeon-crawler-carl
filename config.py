@@ -8,7 +8,7 @@ load_dotenv()
 PROJECT_ROOT = Path(__file__).parent
 
 ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
-MODEL: str = os.getenv("MODEL", "claude-opus-4-5")
+MODEL: str = os.getenv("MODEL", "claude-sonnet-4-5")
 MAX_TOKENS: int = int(os.getenv("MAX_TOKENS", "400"))
 
 REFERENCE_AUDIO_DIR: Path = PROJECT_ROOT / "reference_audio"

@@ -203,7 +203,7 @@ class AchievementStack(Stack):
                 stream_prefix="achievement",
             ),
             environment={
-                "MODEL": "claude-opus-4-5",
+                "MODEL": "claude-sonnet-4-5",
                 "MAX_TOKENS": "400",
                 "STORAGE_MODE": "cloud",
                 "DYNAMODB_TABLE": table.table_name,
