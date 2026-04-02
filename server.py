@@ -170,7 +170,11 @@ def api_achievement(entry_id: int):
         raise HTTPException(status_code=404, detail="Achievement not found")
 
     if entry.get("audio_files"):
-        existing = [f for f in entry["audio_files"] if os.path.exists(f)]
+        # In cloud mode, audio_files are S3 keys — don't check os.path.exists
+        if STORAGE_MODE == "local":
+            existing = [f for f in entry["audio_files"] if os.path.exists(f)]
+        else:
+            existing = entry["audio_files"]  # trust S3 keys exist
         if not existing:
             try:
                 entry["audio_files"] = synthesize_achievement(entry)
