@@ -14,8 +14,8 @@ from pathlib import Path
 
 from pydub import AudioSegment
 
-from config import OUTPUT_DIR
-from voice import synthesize
+from config import OUTPUT_DIR, STORAGE_MODE
+from voice import synthesize, upload_to_s3
 
 # Filename hints double as segment identifiers. The pause logic in both
 # _play_audio_sequence() and the frontend JS (index.html) matches on these
@@ -44,11 +44,11 @@ def synthesize_achievement(achievement: dict) -> list[str]:
       4. "Your Reward!" — closer with volume crescendo (40% → 220%)
       5. Reward text — the punchline, normal level
 
-    Returns list of absolute file path strings to the generated WAV files.
+    Returns list of absolute file path strings to the generated MP3 files.
     Used by the CLI. The web server uses synthesize_achievement_parallel() instead.
     """
     segments = _parse_segments(achievement)
-    return [str(synthesize(text, **kwargs)) for text, kwargs in segments]
+    return [str(synthesize(text, keep_local=True, **kwargs)) for text, kwargs in segments]
 
 
 def _parse_segments(achievement: dict) -> list[tuple[str, dict]]:
@@ -99,7 +99,7 @@ def synthesize_achievement_parallel(achievement: dict) -> list[str]:
 
     def _synth(args: tuple[str, dict]) -> str:
         text, kwargs = args
-        return str(synthesize(text, **kwargs))
+        return str(synthesize(text, keep_local=True, **kwargs))
 
     with ThreadPoolExecutor(max_workers=5) as executor:
         results = list(executor.map(_synth, segments))
@@ -134,6 +134,14 @@ def concatenate_audio(audio_files: list[str]) -> str:
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     out_path = OUTPUT_DIR / f"{timestamp}_combined.mp3"
     combined.export(str(out_path), format="mp3", bitrate="128k")
+
+    # Clean up individual segment files — they're baked into the combined file
+    for path_str in audio_files:
+        Path(path_str).unlink(missing_ok=True)
+
+    # Upload combined file to S3 in cloud mode
+    if STORAGE_MODE == "cloud":
+        return upload_to_s3(out_path)
 
     return str(out_path)
 

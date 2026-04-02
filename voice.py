@@ -113,14 +113,16 @@ def synthesize(
     volume_ramp: bool = False,
     speed: float = 1.0,
     gain_db: float = 0.0,
-) -> Path:
+    keep_local: bool = False,
+) -> Path | str:
     """
     Synthesize text using the ElevenLabs cloned voice with AI effect.
     text: the string to speak
     filename_hint: short slug used in the output filename
     volume_ramp: if True, audio builds from low to high volume
     speed: playback speed multiplier (1.0 = normal, 1.15 = slightly faster)
-    Returns Path to the generated MP3 file in output/
+    keep_local: if True, skip S3 upload even in cloud mode (for concatenation)
+    Returns Path (local) or str (S3 key) to the generated MP3 file.
     """
     text = _expand_for_tts(text)
     client = _get_client()
@@ -149,10 +151,15 @@ def synthesize(
     _encode_mp3(processed_wav, out_path)
     processed_wav.unlink()
 
-    if STORAGE_MODE == "cloud":
+    if STORAGE_MODE == "cloud" and not keep_local:
         return _upload_to_s3(out_path)
 
     return out_path
+
+
+def upload_to_s3(local_path: Path) -> str:
+    """Public wrapper for S3 upload — used by concatenation pipeline."""
+    return _upload_to_s3(local_path)
 
 
 def _encode_mp3(wav_path: Path, mp3_path: Path) -> None:
