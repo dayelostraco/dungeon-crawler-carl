@@ -23,7 +23,9 @@ from synthesis import concatenate_audio, synthesize_achievement_parallel
 
 def main():
     parser = argparse.ArgumentParser(description="Re-synthesize audio for all achievements")
-    parser.add_argument("--dry-run", action="store_true", help="List achievements without processing")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="List achievements without processing"
+    )
     parser.add_argument("--start-id", type=int, default=0, help="Skip achievements below this ID")
     args = parser.parse_args()
 
