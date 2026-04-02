@@ -210,24 +210,32 @@
   <script>
     const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-    /* Unlock audio on first user gesture — browsers block autoplay otherwise.
-       Creating and resuming an AudioContext during a click event grants
-       permission for all subsequent Audio.play() calls in this session. */
-    let audioUnlocked = false;
+    /* Audio unlock strategy for mobile browsers:
+       1. On user click, play a silent audio buffer through a shared Audio element
+       2. Reuse that same element for all subsequent playback
+       This keeps the audio pipeline "warm" so plays work after async delays (SSE) */
+    let sharedAudio = null;
+
     function unlockAudio() {
-      if (audioUnlocked) return;
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      ctx.resume().then(() => { audioUnlocked = true; });
+      if (sharedAudio) return;
+      sharedAudio = new Audio();
+      /* Play a tiny silent WAV (44 bytes, valid WAV header with 0 samples) */
+      sharedAudio.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=';
+      sharedAudio.play().catch(() => {});
     }
 
     function playAudio(url) {
-      return new Promise((resolve, reject) => {
-        const audio = new Audio(url);
-        audio.onended = resolve;
-        audio.onerror = (e) => {
+      return new Promise((resolve) => {
+        /* Reuse the shared audio element to stay in the browser's
+           allowed-playback chain from the original user gesture */
+        const audio = sharedAudio || new Audio();
+        sharedAudio = audio;
+        audio.onended = () => resolve();
+        audio.onerror = () => {
           console.warn('Audio playback failed, skipping:', url);
-          resolve(); /* don't break the sequence on playback errors */
+          resolve();
         };
+        audio.src = url;
         audio.play().catch(() => {
           console.warn('Audio play blocked, skipping:', url);
           resolve();
