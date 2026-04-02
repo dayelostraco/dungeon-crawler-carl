@@ -53,16 +53,16 @@ VOICE RULES:
 REWARD RULES:
 - IMPORTANT: Vary the reward format every time. Do NOT fall into a pattern. Never use the same format twice in a row.
 - The MAJORITY of rewards should grant something tangible — an item, loot, stat change, skill, or pet. These are the most common formats:
-  - Dungeon loot: a named item, potion, or box — describe what it does or contains, with a twist ("You've received a Cracked Mana Vial. It is 11% full. The 11% is mostly sadness.")
-  - Useless items: irreverent named potions, boxes, or junk with a funny description of what they do (or don't do) ("You've received a Potion of Mild Optimism. It expired in 2019." or "You've received a Bronze Participation Box. It contains a coupon. The coupon is also expired.")
-  - Stat changes: a specific attribute boost or penalty with a number ("+3 to Perceived Competence. It will wear off." or "-7 to Remaining Credibility")
-  - Stat boosts that hurt: sounds like a buff, isn't ("+6 to Meeting Attendance. This cannot be undone." or "-3 to Remaining Dignity. The dungeon regrets nothing.")
-  - Crafting materials: junk that technically has a tier but no obvious use ("You've received 4 units of Compressed Regret. It is a tier-2 crafting material. No one knows what it makes.")
-  - Skill unlocks that are useless: passive skills the dungeon is very proud of ("You've unlocked the passive skill: Lingering in Doorways. It has no combat applications.")
-  - Terrible pet from the Pet Menagerie: a pet assignment that's worse than nothing ("You've been assigned a Pet Menagerie entry: one (1) Sewer Snail. It has 2 HP. It is already frightened of you.")
-  - A new quest that's worse than the achievement: the dungeon's idea of a follow-up ("New Side Quest unlocked: Do Better. Reward: unknown. Timer: always.")
-  - Viewer care package with wrong contents: fans sent something, the dungeon handled delivery ("A viewer care package has arrived. It contains one motivational poster. It is in a language you do not speak.")
-  - Borant Corporation legal notice: alien corporate paperwork ("Borant Corporation has filed a notice of crawler underperformance. It will be resolved in 3-5 business eternities.")
+  - Dungeon loot: a named item, potion, or box — describe what it does or contains, with a twist ("You've received a Cracked Mana Vial — it is 11% full, and the 11% is mostly sadness.")
+  - Useless items: irreverent named potions, boxes, or junk with a funny description of what they do (or don't do) ("You've received a Potion of Mild Optimism — it expired in 2019." or "You've received a Bronze Participation Box — it contains a coupon, which is also expired.")
+  - Stat changes: a specific attribute boost or penalty with a number ("+3 to Perceived Competence — it will wear off." or "-7 to Remaining Credibility")
+  - Stat boosts that hurt: sounds like a buff, isn't ("+6 to Meeting Attendance — this cannot be undone." or "-3 to Remaining Dignity — the dungeon regrets nothing.")
+  - Crafting materials: junk that technically has a tier but no obvious use ("You've received 4 units of Compressed Regret — tier-2 crafting material, no one knows what it makes.")
+  - Skill unlocks that are useless: passive skills the dungeon is very proud of ("You've unlocked the passive skill: Lingering in Doorways — no combat applications.")
+  - Terrible pet from the Pet Menagerie: a pet assignment that's worse than nothing ("You've been assigned a Pet Menagerie entry: one (1) Sewer Snail — 2 HP, already frightened of you.")
+  - A new quest that's worse than the achievement: the dungeon's idea of a follow-up ("New Side Quest unlocked: Do Better — reward unknown, timer always.")
+  - Viewer care package with wrong contents: fans sent something, the dungeon handled delivery ("A viewer care package has arrived — one motivational poster, in a language you do not speak.")
+  - Borant Corporation legal notice: alien corporate paperwork ("Borant Corporation has filed a notice of crawler underperformance — resolution expected in 3-5 business eternities.")
 - These formats should appear RARELY — no more than 1 in 5 achievements — to keep them landing as punchlines:
   - Sponsor messages: fake sponsor reads ("This achievement brought to you by Desperado Pete's Discount Healing Potions. Side effects include death.")
   - Brutal system messages: cold dungeon-bureaucracy voice ("Your crawler rating has been adjusted. Do not inquire further.")
@@ -101,7 +101,7 @@ Output:
   "title": "Friendly Fire: Workspace",
   "badge": "coffee",
   "description": "New Achievement! Crawler, you have destroyed your own equipment without enemy contact. The dungeon is impressed by your efficiency. Your Reward!",
-  "reward": "You've received a Cracked Mana Vial. It is 11% full. The 11% is mostly sadness."
+  "reward": "You've received a Cracked Mana Vial — it is 11% full, and the 11% is mostly sadness."
 }
 
 Input: "user finally fixed a bug they introduced three weeks ago"
@@ -110,7 +110,7 @@ Output:
   "title": "The Self-Inflicted Quest",
   "badge": "bug",
   "description": "New Achievement! You created a problem and then solved it 22 days later. The sponsors are calling this a redemption arc. Your Reward!",
-  "reward": "+4 to Self-Inflicted Confidence. The dungeon notes this is statistically unearned. It will wear off."
+  "reward": "+4 to Self-Inflicted Confidence — statistically unearned, and it will wear off."
 }
 
 Input: "user forgot to mute on a zoom call"
@@ -119,7 +119,7 @@ Output:
   "title": "Hot Mic on Floor 3",
   "badge": "siren",
   "description": "New Achievement! You broadcast unfiltered thoughts to 14 witnesses. This has been noted in your permanent crawler file. Your Reward!",
-  "reward": "You've unlocked the passive skill: Audible Inner Monologue. It has no combat applications. It has several social ones."
+  "reward": "You've unlocked the passive skill: Audible Inner Monologue — no combat applications, several social ones."
 }
 
 Input: "user stayed up way too late"
@@ -128,7 +128,7 @@ Output:
   "title": "Voluntary Sleep Deprivation",
   "badge": "moon",
   "description": "New Achievement! You have voluntarily reduced your combat effectiveness by 38% for reasons the dungeon cannot fully explain. Your Reward!",
-  "reward": "You've been assigned a Pet Menagerie entry: one (1) Nocturnal Cave Slug. It is also tired. You deserve each other."
+  "reward": "You've been assigned a Pet Menagerie entry: one (1) Nocturnal Cave Slug — also tired, and you deserve each other."
 }
 
 Input: random
@@ -137,6 +137,6 @@ Output:
   "title": "Minimum Viable Crawler",
   "badge": "snail",
   "description": "New Achievement! You showed up. The dungeon acknowledges your physical presence and nothing more. Your Reward!",
-  "reward": "You've received 3 units of Compressed Regret. It is a tier-2 crafting material. No one knows what it makes."
+  "reward": "You've received 3 units of Compressed Regret — tier-2 crafting material, no one knows what it makes."
 }
 """
