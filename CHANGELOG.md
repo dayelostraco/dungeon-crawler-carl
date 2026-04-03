@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-04-03
+
+### Security
+- Fixed XSS vulnerability in shared achievement route — `html.escape()` applied to title and description before interpolation into OG meta tags
+- Added input validation to `/api/achievements` endpoint — `page_size` clamped to 1-100, `page` clamped to >= 0
+
+### Reward Format Analytics (Issue #28)
+- New `reward_classifier.py` — regex-based classifier with 13 format categories (loot, stat_boost, skill_unlock, pet, quest, care_package, borant_notice, crafting_material, sponsor, system_message, anti_reward, commentary_donut, commentary_mordecai) plus "other"
+- `reward_format` column added to SQLite schema and DynamoDB items — classified on save, backfilled on load for older entries
+- New admin endpoint: `GET /api/admin/reward-distribution` — returns total count, per-format counts, and percentages
+- API responses now include `reward_format` field
+
+### Prompt Regression Testing (Issue #27)
+- New script: `scripts/check_reward_distribution.py` — generates N achievements and validates:
+  - No single reward format exceeds 40% of total
+  - No number repeats more than 3 times across samples
+  - Banned numbers (47, 847) never appear
+- Supports `--dry-run` (check existing DB) and `--count N` (generate fresh samples)
+
+### Code Quality
+- Extracted 112-line system prompt from `config.py` into `system_prompt.txt` — config.py is now 30 lines
+- CI: added `libcairo2-dev` to system dependencies so card rendering tests run
+
+### Testing
+- 164 tests (was 138): reward classifier tests, distribution checker tests, admin endpoint tests, input validation tests
+
+### Documentation
+- README: updated directory structure, added reward analytics/regression testing/system deps sections, fixed repo URL
+- RUNBOOK: added reward format drift troubleshooting section, fixed repo URL
+
 ## [1.2.0] - 2026-04-02
 
 ### Prompt Overhaul — Reward Variety & DCC Universe Depth

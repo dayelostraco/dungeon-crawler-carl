@@ -25,7 +25,7 @@ Inspired by the dungeon announcer from the *Dungeon Crawler Carl* book series.
 dungeon_crawler_carl/
 ├── main.py               # CLI entry point
 ├── generator.py          # Claude API achievement generation
-├── config.py             # Env vars, constants, system prompt
+├── config.py             # Env vars, constants, prompt loader
 ├── display.py            # Terminal formatting
 ├── voice.py              # ElevenLabs TTS + AI audio effects
 ├── player.py             # Audio playback via pygame
@@ -33,7 +33,9 @@ dungeon_crawler_carl/
 ├── archive.py            # Achievement persistence (SQLite local, DynamoDB cloud)
 ├── storage.py            # S3 download helper for CLI replay
 ├── card.py               # Shareable achievement card PNG renderer
+├── reward_classifier.py  # Reward format classifier (analytics + regression tests)
 ├── server.py             # FastAPI web server with SSE streaming
+├── system_prompt.txt     # Claude system prompt (DCC announcer persona)
 ├── static/index.html     # Web UI (single-page app)
 ├── Dockerfile            # Production container
 ├── cdk/                  # AWS CDK infrastructure (ECS Fargate + DynamoDB + S3)
@@ -41,7 +43,8 @@ dungeon_crawler_carl/
 ├── reference_audio/      # Voice reference samples
 ├── transcripts/          # Transcript files
 ├── output/               # Generated audio files
-├── tests/                # Unit + integration tests (138 tests)
+├── scripts/              # Utility scripts (reward distribution checker)
+├── tests/                # Unit + integration tests (164 tests)
 ├── RUNBOOK.md            # Operations guide for production
 ├── ruff.toml             # Linting config
 ├── requirements.txt      # Production dependencies
@@ -57,7 +60,7 @@ dungeon_crawler_carl/
 ### 1. Clone and create virtual environment
 
 ```bash
-git clone https://github.com/dayelostraco/dungeon-crawler-carl.git
+git clone https://github.com/sigilark/dungeon-crawler-carl.git
 cd dungeon-crawler-carl
 python -m venv .venv
 source .venv/bin/activate
@@ -257,6 +260,40 @@ docker run -p 8000:8000 --env-file .env crawl-log
 Swagger UI available at `/docs` when the server is running:
 - Local: http://localhost:8000/docs
 - Production: https://crawl.sigilark.com/docs
+
+### Reward format analytics
+
+The admin endpoint tracks reward format distribution across all achievements:
+
+```bash
+curl https://crawl.sigilark.com/api/admin/reward-distribution
+```
+
+Returns counts and percentages for each format category (loot, stat_boost, skill_unlock, pet, quest, etc.).
+
+### Prompt regression testing
+
+Check reward format distribution for clustering or banned numbers:
+
+```bash
+# Check existing DB entries
+python scripts/check_reward_distribution.py --dry-run
+
+# Generate 20 fresh samples and validate distribution
+python scripts/check_reward_distribution.py --count 20
+```
+
+### System dependencies
+
+Card rendering tests require `libcairo2`:
+
+```bash
+# macOS
+brew install cairo
+
+# Ubuntu/Debian
+sudo apt-get install libcairo2-dev
+```
 
 ### Run tests
 

@@ -7,6 +7,7 @@ Usage:
 """
 
 import asyncio
+import html
 import json
 import logging
 import os
@@ -84,6 +85,7 @@ def _entry_response(entry: dict) -> dict:
         "badge": entry.get("badge"),
         "description": entry["description"],
         "reward": entry["reward"],
+        "reward_format": entry.get("reward_format"),
         "trigger": entry.get("trigger"),
         "audio_urls": _audio_urls(entry.get("audio_files", [])),
     }
@@ -110,16 +112,17 @@ def shared_achievement(entry_id: int, request: Request):
     entry = archive.get(entry_id)
 
     # Read the base HTML template
-    html = (STATIC_DIR / "index.html").read_text()
+    page_html = (STATIC_DIR / "index.html").read_text()
 
     if entry:
-        title = entry.get("title", "Achievement Unlocked")
+        title = html.escape(entry.get("title", "Achievement Unlocked"))
         desc = entry.get("description", "")
         # Strip announcer tags for the preview
         if desc.lower().startswith("new achievement!"):
             desc = desc[len("new achievement!") :].strip()
         if desc.lower().endswith("your reward!"):
             desc = desc[: -len("your reward!")].strip()
+        desc = html.escape(desc)
 
         base_url = str(request.base_url).rstrip("/")
         card_url = f"{base_url}/api/achievements/{entry_id}/card.png"
@@ -137,12 +140,12 @@ def shared_achievement(entry_id: int, request: Request):
             f'  <meta name="twitter:image" content="{card_url}">\n'
             f"  "
         )
-        html = html.replace(
+        page_html = page_html.replace(
             "<title>The Crawl Log</title>",
             f"<title>{title} — The Crawl Log</title>\n  {og_tags}",
         )
 
-    return HTMLResponse(content=html)
+    return HTMLResponse(content=page_html)
 
 
 @app.post("/api/generate")
@@ -222,6 +225,8 @@ async def api_generate(req: GenerateRequest):
 
 @app.get("/api/achievements")
 def api_achievements(page: int = 0, page_size: int = 10):
+    page = max(0, page)
+    page_size = max(1, min(page_size, 100))
     entries = archive.load_all()
     entries.reverse()  # most recent first
     total = len(entries)
@@ -278,3 +283,9 @@ def serve_audio(filename: str):
         raise HTTPException(status_code=404, detail="Audio file not found")
     media_type = "audio/wav" if file_path.suffix == ".wav" else "audio/mpeg"
     return FileResponse(str(file_path), media_type=media_type)
+
+
+@app.get("/api/admin/reward-distribution")
+def api_reward_distribution():
+    """Return reward format distribution stats across all achievements."""
+    return archive.format_distribution()

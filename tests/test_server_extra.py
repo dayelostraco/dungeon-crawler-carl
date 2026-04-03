@@ -112,3 +112,42 @@ def test_swagger_docs_available(client):
     res = client.get("/docs")
     assert res.status_code == 200
     assert "swagger" in res.text.lower() or "openapi" in res.text.lower()
+
+
+@patch("server.synthesize_achievement_parallel", return_value=[])
+@patch("server.generate", return_value=SAMPLE_ACHIEVEMENT)
+def test_reward_distribution_endpoint(mock_gen, mock_synth, client):
+    """GET /api/admin/reward-distribution returns format stats."""
+    client.post("/api/generate", json={"trigger": "a"})
+    client.post("/api/generate", json={"trigger": "b"})
+
+    res = client.get("/api/admin/reward-distribution")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["total"] == 2
+    assert "counts" in data
+    assert "percentages" in data
+
+
+@patch("server.synthesize_achievement_parallel", return_value=[])
+@patch("server.generate", return_value=SAMPLE_ACHIEVEMENT)
+def test_achievement_response_includes_reward_format(mock_gen, mock_synth, client):
+    """API responses include the reward_format field."""
+    client.post("/api/generate", json={"trigger": "test"})
+    res = client.get("/api/achievements")
+    data = res.json()
+    assert data["items"][0]["reward_format"] is not None
+
+
+def test_page_size_clamped(client):
+    """page_size is clamped to max 100."""
+    res = client.get("/api/achievements?page_size=999")
+    data = res.json()
+    assert data["page_size"] == 100
+
+
+def test_negative_page_clamped(client):
+    """Negative page is clamped to 0."""
+    res = client.get("/api/achievements?page=-5")
+    data = res.json()
+    assert data["page"] == 0

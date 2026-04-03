@@ -12,6 +12,7 @@ import sqlite3
 from datetime import datetime
 
 from config import DB_PATH, DYNAMODB_TABLE, STORAGE_MODE
+from reward_classifier import classify_reward
 
 # ---------------------------------------------------------------------------
 # SQLite backend (local mode)
@@ -38,11 +39,13 @@ def _get_db() -> sqlite3.Connection:
                 audio_files TEXT NOT NULL DEFAULT '[]'
             )
         """)
-        # Add badge column to existing tables (no-op if already exists)
+        # Add columns to existing tables (no-op if already exists)
         import contextlib
 
         with contextlib.suppress(Exception):
             conn.execute("ALTER TABLE achievements ADD COLUMN badge TEXT")
+        with contextlib.suppress(Exception):
+            conn.execute("ALTER TABLE achievements ADD COLUMN reward_format TEXT")
         conn.commit()
         _DB_INIT = True
     return conn
@@ -56,6 +59,7 @@ def _row_to_dict(row: sqlite3.Row) -> dict:
         "badge": row["badge"],
         "description": row["description"],
         "reward": row["reward"],
+        "reward_format": row["reward_format"],
         "trigger": row["trigger_text"],
         "audio_files": json.loads(row["audio_files"]),
     }
@@ -64,15 +68,17 @@ def _row_to_dict(row: sqlite3.Row) -> dict:
 def _local_save(achievement: dict, trigger: str | None, audio_files: list[str] | None) -> dict:
     conn = _get_db()
     ts = datetime.now().isoformat()
+    reward_format = classify_reward(achievement.get("reward", ""))
     cur = conn.execute(
-        "INSERT INTO achievements (timestamp, title, badge, description, reward, trigger_text, audio_files) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO achievements (timestamp, title, badge, description, reward, reward_format, trigger_text, audio_files) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         (
             ts,
             achievement.get("title", ""),
             achievement.get("badge"),
             achievement.get("description", ""),
             achievement.get("reward", ""),
+            reward_format,
             trigger,
             json.dumps(audio_files or []),
         ),
@@ -85,6 +91,7 @@ def _local_save(achievement: dict, trigger: str | None, audio_files: list[str] |
         "badge": achievement.get("badge"),
         "description": achievement.get("description", ""),
         "reward": achievement.get("reward", ""),
+        "reward_format": reward_format,
         "trigger": trigger,
         "audio_files": audio_files or [],
     }
@@ -137,6 +144,7 @@ def _dynamo_save(achievement: dict, trigger: str | None, audio_files: list[str] 
     new_id = int(resp["Attributes"]["counter"])
 
     ts = datetime.now().isoformat()
+    reward_format = classify_reward(achievement.get("reward", ""))
     item = {
         "id": new_id,
         "timestamp": ts,
@@ -144,6 +152,7 @@ def _dynamo_save(achievement: dict, trigger: str | None, audio_files: list[str] 
         "badge": achievement.get("badge", ""),
         "description": achievement.get("description", ""),
         "reward": achievement.get("reward", ""),
+        "reward_format": reward_format,
         "trigger_text": trigger or "",
         "audio_files": audio_files or [],
     }
@@ -164,6 +173,9 @@ def _dynamo_load_all() -> list[dict]:
         if item["id"] == 0:
             continue
         item["trigger"] = item.pop("trigger_text", None) or None
+        # Backfill reward_format for older entries
+        if "reward_format" not in item:
+            item["reward_format"] = classify_reward(item.get("reward", ""))
         entries.append(item)
     return sorted(entries, key=lambda x: x["id"])
 
@@ -175,6 +187,8 @@ def _dynamo_get(entry_id: int) -> dict | None:
     if not item or item["id"] == 0:
         return None
     item["trigger"] = item.pop("trigger_text", None) or None
+    if "reward_format" not in item:
+        item["reward_format"] = classify_reward(item.get("reward", ""))
     return item
 
 
@@ -221,3 +235,19 @@ def update_audio(entry_id: int, audio_files: list[str]) -> None:
         _dynamo_update_audio(entry_id, audio_files)
     else:
         _local_update_audio(entry_id, audio_files)
+
+
+def format_distribution() -> dict:
+    """Return reward format distribution stats.
+
+    Returns dict with keys: total, counts (format -> count),
+    percentages (format -> float 0-100).
+    """
+    entries = load_all()
+    total = len(entries)
+    counts: dict[str, int] = {}
+    for entry in entries:
+        fmt = entry.get("reward_format") or classify_reward(entry.get("reward", ""))
+        counts[fmt] = counts.get(fmt, 0) + 1
+    percentages = {k: round(v / total * 100, 1) if total else 0.0 for k, v in counts.items()}
+    return {"total": total, "counts": counts, "percentages": percentages}

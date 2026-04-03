@@ -66,7 +66,7 @@ Push to `main` — GitHub Actions handles lint, test, docker build, and deploy a
 
 ```bash
 git push origin main
-# Monitor: gh run list --repo dayelostraco/dungeon-crawler-carl --limit 1
+# Monitor: gh run list --repo sigilark/dungeon-crawler-carl --limit 1
 ```
 
 ### Manual deploy (if CI is broken)
@@ -127,6 +127,13 @@ Browser autoplay restrictions. The Play button should appear — if not, check t
 
 ### ElevenLabs rate limit
 The app makes 3 ElevenLabs calls per achievement (title, description, reward). If you hit rate limits, reduce generation frequency or upgrade your ElevenLabs plan.
+
+### Reward format drift
+Check if the model is clustering on specific reward formats:
+```bash
+curl https://crawl.sigilark.com/api/admin/reward-distribution
+```
+If any format exceeds 40%, consider reviewing the system prompt. Run `python scripts/check_reward_distribution.py --count 20` locally to validate with fresh samples.
 
 ### Claude API errors
 Check if the API key is valid and has credits:
