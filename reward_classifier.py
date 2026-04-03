@@ -14,6 +14,7 @@ _PATTERNS: list[tuple[str, re.Pattern]] = [
     ("borant_notice", re.compile(r"borant corporation|borant", re.I)),
     ("commentary_donut", re.compile(r"princess donut", re.I)),
     ("commentary_mordecai", re.compile(r"mordecai", re.I)),
+    ("your_mom", re.compile(r"your mom|your mother", re.I)),
     ("quest", re.compile(r"side quest|new quest|quest unlocked", re.I)),
     ("care_package", re.compile(r"care package|viewer.*package", re.I)),
     ("anti_reward", re.compile(r"^none\b|do not want to reward|no reward", re.I)),

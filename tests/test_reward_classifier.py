@@ -90,6 +90,22 @@ def test_care_package():
     )
 
 
+def test_your_mom():
+    assert (
+        classify_reward(
+            "Your mother has been cited as a comparative baseline. You did not meet it."
+        )
+        == "your_mom"
+    )
+
+
+def test_your_mom_alternate():
+    assert (
+        classify_reward("The dungeon has determined your mom could have cleared this floor faster.")
+        == "your_mom"
+    )
+
+
 def test_other_fallback():
     assert classify_reward("Something completely unexpected.") == "other"
 
@@ -103,4 +119,5 @@ def test_categories_list_complete():
     assert "other" in CATEGORIES
     assert "loot" in CATEGORIES
     assert "stat_boost" in CATEGORIES
-    assert len(CATEGORIES) == 14
+    assert "your_mom" in CATEGORIES
+    assert len(CATEGORIES) == 15
