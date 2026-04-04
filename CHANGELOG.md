@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2026-04-04
+
+### Animated Card Reveal
+- Achievement cards slide up with an overshoot bounce animation
+- Content elements (header, title, description, reward) stagger in sequentially
+- Gold rarity: pulsing gold glow + golden sparkle particles on reveal
+- Legendary rarity: bright pink/purple glow + colored sparkle particles
+- All CSS-only animations, no JavaScript libraries required
+
+### API Rate Limiting
+- `/api/generate`: 3 per minute, 20 per hour per IP
+- `/api/achievements/{id}/card.png`: 3 per minute, 20 per hour per IP
+- Returns 429 Too Many Requests when exceeded
+- In-memory storage via slowapi (resets on container restart)
+
+### Infrastructure
+- Deploy concurrency group added to CI — back-to-back pushes queue instead of failing
+- Concurrency groups added to 5 other repos (glyphon-web, mcart-api/infra/db/web)
+
+### Code Quality
+- 209 tests (was 196), 90% coverage
+- Code comments for non-obvious patterns (DynamoDB counter, silence threshold, text wrapping, schema backfill)
+- RUNBOOK updated with daily challenge and retry log monitoring
+
 ## [1.4.0] - 2026-04-04
 
 ### Rarity Tiers

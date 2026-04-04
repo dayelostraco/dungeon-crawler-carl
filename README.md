@@ -44,7 +44,7 @@ dungeon_crawler_carl/
 ├── transcripts/          # Transcript files
 ├── output/               # Generated audio files
 ├── scripts/              # Utility scripts (reward distribution checker)
-├── tests/                # Unit + integration tests (196 tests)
+├── tests/                # Unit + integration tests (209 tests)
 ├── RUNBOOK.md            # Operations guide for production
 ├── ruff.toml             # Linting config
 ├── requirements.txt      # Production dependencies
@@ -109,7 +109,7 @@ uvicorn server:app --reload
 - Dark-themed dungeon aesthetic with rarity-colored accents
 - Text input — describe what you did, crawler (random suggestions rotate on page load)
 - **Daily Challenge** — a new prompt each day, click to accept and generate
-- **Rarity tiers** — Bronze/Silver/Gold/Legendary with colored borders, card accents, and audio treatment
+- **Rarity tiers** — Bronze/Silver/Gold/Legendary with colored borders, card accents, audio treatment, and animated reveals (glow + sparkles for Gold/Legendary)
 - **SSE streaming** — achievement card appears in ~5s, audio follows after parallel synthesis
 - **Parallel TTS** — 5 audio segments synthesized simultaneously, concatenated into single MP3
 - **Shareable achievement cards** — high-DPI PNG with rarity-colored border, trigger text, and date
