@@ -137,6 +137,55 @@ def test_generate_replaces_banned_after_exhausting_retries(mock_cls):
     assert "48" in result["reward"]
 
 
+@patch("generator.ANTHROPIC_API_KEY", "sk-test")
+@patch("generator.anthropic.Anthropic")
+def test_generate_retries_on_banned_phrases(mock_cls):
+    """generate() retries when description contains 'The dungeon...' pattern."""
+    from generator import generate
+
+    banned = {
+        "title": "Test",
+        "description": "New Achievement! The dungeon respects your commitment. Your Reward!",
+        "reward": "+5 to Nothing",
+    }
+    clean = SAMPLE_ACHIEVEMENT
+
+    client = MagicMock()
+    mock_cls.return_value = client
+    client.messages.create.side_effect = [
+        _mock_response(json.dumps(banned)),
+        _mock_response(json.dumps(clean)),
+    ]
+
+    result = generate()
+    assert result == clean
+    assert client.messages.create.call_count == 2
+
+
+@patch("generator.ANTHROPIC_API_KEY", "sk-test")
+@patch("generator.anthropic.Anthropic")
+def test_generate_retries_on_sponsors_phrase(mock_cls):
+    """generate() retries when description contains 'The sponsors...' pattern."""
+    from generator import generate
+
+    banned = {
+        "title": "Test",
+        "description": "New Achievement! The sponsors are thrilled. Your Reward!",
+        "reward": "Nothing.",
+    }
+    clean = SAMPLE_ACHIEVEMENT
+
+    client = MagicMock()
+    mock_cls.return_value = client
+    client.messages.create.side_effect = [
+        _mock_response(json.dumps(banned)),
+        _mock_response(json.dumps(clean)),
+    ]
+
+    result = generate()
+    assert result == clean
+
+
 @patch("generator.ANTHROPIC_API_KEY", "")
 def test_generate_missing_api_key():
     """generate() raises EnvironmentError when API key is empty."""
