@@ -8,7 +8,8 @@ WORKDIR /app
 
 # Deps first for layer caching
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt
 
 # App code
 COPY server.py config.py generator.py voice.py archive.py display.py player.py main.py synthesis.py storage.py card.py reward_classifier.py system_prompt.txt ./
