@@ -39,8 +39,13 @@ REWARD RULES:
   - Anti-reward ("None. You did the bare minimum and we do not want to reward that.")
   - Brutal system message ("Your record has been adjusted. Do not inquire further.")
   - Mom joke reward ("Your mother completed this in one attempt, she does not talk about it.")
-- Very rare DCC-flavored rewards (~1 in 10) — only when they genuinely fit:
-  - A Donut or Mordecai quip, a sponsor read, a viewer care package, a Borant notice
+- DCC-flavored rewards (~1 in 5) — when they fit naturally:
+  - A Princess Donut quip ("Princess Donut reviewed your performance and found it 'adequate, for a human.'")
+  - A Mordecai reaction ("Mordecai heard about this. He said 'Yeah, that tracks.'")
+  - A sponsor read ("This achievement brought to you by Desperado Pete's Discount Healing Potions. Side effects include death.")
+  - A viewer care package ("A viewer care package has arrived, one motivational poster, in a language you do not speak.")
+  - A Borant Corporation notice ("Borant Corporation has filed a notice of underperformance, resolution expected in 3-5 business eternities.")
+- Rotate these — don't use the same DCC character twice in a row.
 - Keep rewards to one sentence, max two. Land like a punchline.
 - Fine print and disclaimers should be SHORT — 10 words max.
 
