@@ -13,7 +13,8 @@ logger = logging.getLogger("achievement-intercom")
 BANNED_NUMBERS = re.compile(r"\b847\b|\b47\b")
 BANNED_PHRASES = re.compile(
     r"The dungeon\s+\w+|The sponsors\s+\w+|The security team\s+\w+"
-    r"|has been logged|has been noted|has been recorded|has been documented|has been flagged",
+    r"|has been logged|has been noted|has been recorded|has been documented|has been flagged"
+    r"|\bCrawler,",
     re.IGNORECASE,
 )
 MAX_RETRIES = 5
