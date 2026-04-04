@@ -277,10 +277,126 @@ class AchievementStack(Stack):
             target=route53.RecordTarget.from_alias(targets.LoadBalancerTarget(alb)),
         )
 
-        # --- Billing Alarm ---
-        # Alert if monthly spend exceeds $75 (normal is ~$42)
+        # --- CloudWatch Dashboard ---
         from aws_cdk import aws_cloudwatch as cloudwatch
         from aws_cdk import aws_sns as sns
+
+        dashboard = cloudwatch.Dashboard(
+            self,
+            "OperationsDashboard",
+            dashboard_name="CrawlLog-Operations",
+        )
+
+        # API latency — ALB target response time
+        alb_latency = cloudwatch.Metric(
+            namespace="AWS/ApplicationELB",
+            metric_name="TargetResponseTime",
+            dimensions_map={"LoadBalancer": alb.load_balancer_full_name},
+            statistic="avg",
+            period=Duration.minutes(5),
+        )
+
+        # Request count
+        alb_requests = cloudwatch.Metric(
+            namespace="AWS/ApplicationELB",
+            metric_name="RequestCount",
+            dimensions_map={"LoadBalancer": alb.load_balancer_full_name},
+            statistic="Sum",
+            period=Duration.minutes(5),
+        )
+
+        # HTTP 4xx/5xx errors
+        alb_4xx = cloudwatch.Metric(
+            namespace="AWS/ApplicationELB",
+            metric_name="HTTPCode_Target_4XX_Count",
+            dimensions_map={"LoadBalancer": alb.load_balancer_full_name},
+            statistic="Sum",
+            period=Duration.minutes(5),
+        )
+        alb_5xx = cloudwatch.Metric(
+            namespace="AWS/ApplicationELB",
+            metric_name="HTTPCode_Target_5XX_Count",
+            dimensions_map={"LoadBalancer": alb.load_balancer_full_name},
+            statistic="Sum",
+            period=Duration.minutes(5),
+        )
+
+        # ECS CPU and memory
+        ecs_cpu = cloudwatch.Metric(
+            namespace="AWS/ECS",
+            metric_name="CPUUtilization",
+            dimensions_map={
+                "ClusterName": cluster.cluster_name,
+                "ServiceName": service.service_name,
+            },
+            statistic="avg",
+            period=Duration.minutes(5),
+        )
+        ecs_memory = cloudwatch.Metric(
+            namespace="AWS/ECS",
+            metric_name="MemoryUtilization",
+            dimensions_map={
+                "ClusterName": cluster.cluster_name,
+                "ServiceName": service.service_name,
+            },
+            statistic="avg",
+            period=Duration.minutes(5),
+        )
+
+        # DynamoDB read/write capacity
+        dynamo_reads = table.metric_consumed_read_capacity_units(
+            period=Duration.minutes(5),
+        )
+        dynamo_writes = table.metric_consumed_write_capacity_units(
+            period=Duration.minutes(5),
+        )
+
+        dashboard.add_widgets(
+            cloudwatch.GraphWidget(
+                title="API Latency (avg response time)",
+                left=[alb_latency],
+                width=12,
+            ),
+            cloudwatch.GraphWidget(
+                title="Request Count",
+                left=[alb_requests],
+                width=12,
+            ),
+        )
+        dashboard.add_widgets(
+            cloudwatch.GraphWidget(
+                title="HTTP Errors",
+                left=[alb_4xx, alb_5xx],
+                width=12,
+            ),
+            cloudwatch.GraphWidget(
+                title="ECS CPU & Memory",
+                left=[ecs_cpu],
+                right=[ecs_memory],
+                width=12,
+            ),
+        )
+        dashboard.add_widgets(
+            cloudwatch.GraphWidget(
+                title="DynamoDB Capacity",
+                left=[dynamo_reads, dynamo_writes],
+                width=12,
+            ),
+            cloudwatch.LogQueryWidget(
+                title="Generator Retries (last 24h)",
+                log_group_names=[log_group.log_group_name],
+                query_lines=[
+                    "fields @timestamp, @message",
+                    'filter @message like /Banned content detected|Generation succeeded on attempt/',
+                    "sort @timestamp desc",
+                    "limit 50",
+                ],
+                width=12,
+            ),
+        )
+
+        # --- Billing Alarm ---
+        # Alert if monthly spend exceeds $75 (normal is ~$42)
 
         sns.Topic(self, "BillingAlertTopic")
         cloudwatch.Alarm(

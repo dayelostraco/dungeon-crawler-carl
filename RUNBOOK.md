@@ -17,6 +17,7 @@ Internet → ALB (HTTPS) → ECS Fargate (1 vCPU, 2GB) → Container (uvicorn :8
 - **Stack Name:** AchievementIntercomStack
 - **Domain:** crawl.sigilark.com
 - **CI/CD:** GitHub Actions → auto-deploy on push to main
+- **Dashboard:** [CrawlLog-Operations](https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards/dashboard/CrawlLog-Operations) — latency, requests, errors, ECS resources, DynamoDB, generator retries
 
 ---
 
