@@ -50,11 +50,20 @@ def generate(trigger: str | None = None) -> dict:
         match = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL)
         return match.group(1) if match else text
 
-    def has_banned_content(achievement: dict) -> bool:
-        """Check if any field contains banned numbers or phrases."""
+    def has_banned_content(achievement: dict) -> tuple[bool, str]:
+        """Check if any field contains banned numbers or phrases.
+
+        Returns (is_banned, reason) where reason describes what matched.
+        """
         text = " ".join(str(v) for v in achievement.values())
         desc_and_reward = achievement.get("description", "") + " " + achievement.get("reward", "")
-        return bool(BANNED_NUMBERS.search(text)) or bool(BANNED_PHRASES.search(desc_and_reward))
+        num_match = BANNED_NUMBERS.search(text)
+        phrase_match = BANNED_PHRASES.search(desc_and_reward)
+        if num_match:
+            return True, f"number:{num_match.group()}"
+        if phrase_match:
+            return True, f"phrase:{phrase_match.group()}"
+        return False, ""
 
     for attempt in range(MAX_RETRIES):
         raw = call_api()
@@ -66,14 +75,21 @@ def generate(trigger: str | None = None) -> dict:
             raise ValueError(
                 f"Failed to parse achievement JSON after {MAX_RETRIES} attempts.\nRaw response:\n{raw}"
             ) from None
-        if not has_banned_content(achievement):
+        is_banned, reason = has_banned_content(achievement)
+        if not is_banned:
             if attempt > 0:
-                logger.info("Generation succeeded on attempt %d/%d", attempt + 1, MAX_RETRIES)
+                logger.warning("Generation succeeded on attempt %d/%d", attempt + 1, MAX_RETRIES)
             return achievement
-        logger.info("Banned content detected on attempt %d/%d, retrying", attempt + 1, MAX_RETRIES)
+        logger.warning(
+            "Banned content on attempt %d/%d (%s), retrying", attempt + 1, MAX_RETRIES, reason
+        )
 
     # All retries still have issues; fix what we can
-    logger.warning("All %d attempts contained banned content, applying fallback fixes", MAX_RETRIES)
+    logger.warning(
+        "All %d attempts contained banned content (last reason: %s), applying fallback fixes",
+        MAX_RETRIES,
+        reason,
+    )
     for key in ("title", "description", "reward"):
         if key in achievement:
             # Replace banned numbers with 48 (close enough to be plausible, avoids 47)
