@@ -76,6 +76,7 @@ def generate(trigger: str | None = None) -> dict:
     logger.warning("All %d attempts contained banned content, applying fallback fixes", MAX_RETRIES)
     for key in ("title", "description", "reward"):
         if key in achievement:
+            # Replace banned numbers with 48 (close enough to be plausible, avoids 47)
             achievement[key] = BANNED_NUMBERS.sub("48", achievement[key])
             # Strip entire sentences containing banned phrases — splits on sentence
             # boundaries (.!?) so "New Achievement!" and "Your Reward!" stay intact

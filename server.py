@@ -249,7 +249,8 @@ def api_achievement(entry_id: int):
     if not entry:
         raise HTTPException(status_code=404, detail="Achievement not found")
 
-    # Re-synthesize and concatenate if audio is missing or empty
+    # Re-synthesize if audio is missing. In local mode, also verify the files
+    # actually exist on disk — the DB may reference files that were cleaned up.
     has_audio = entry.get("audio_files") and len(entry["audio_files"]) > 0
     if has_audio and STORAGE_MODE == "local":
         has_audio = any(os.path.exists(f) for f in entry["audio_files"])

@@ -111,7 +111,8 @@ def render_card(achievement: dict) -> bytes:
     font_trigger = _get_font(13)
     font_watermark = _get_font(12)
 
-    # Wrap text
+    # Wrap text — widths tuned to fit within the 800px card at Courier New sizes.
+    # Trigger is narrower font so gets more chars; reward is indented so fewer.
     trigger_lines = textwrap.wrap(f'"{trigger}"', width=58) if trigger else []
     desc_lines = textwrap.wrap(desc_clean, width=52)
     reward_lines = textwrap.wrap(reward, width=48)

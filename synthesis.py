@@ -137,7 +137,12 @@ def synthesize_achievement_parallel(achievement: dict) -> list[str]:
 
 
 def _trim_silence(segment: AudioSegment, silence_thresh: int = -40) -> AudioSegment:
-    """Strip leading and trailing silence from an audio segment."""
+    """Strip leading and trailing silence from an audio segment.
+
+    -40dB threshold catches ElevenLabs' natural padding without clipping
+    quiet consonants. Trimming ensures only our explicit PAUSE_* constants
+    control inter-segment timing.
+    """
     lead = detect_leading_silence(segment, silence_threshold=silence_thresh)
     trail = detect_leading_silence(segment.reverse(), silence_threshold=silence_thresh)
     end = len(segment) - trail

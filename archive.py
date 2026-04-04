@@ -139,7 +139,9 @@ def _get_table():
 def _dynamo_save(achievement: dict, trigger: str | None, audio_files: list[str] | None) -> dict:
     table = _get_table()
 
-    # Atomic counter for auto-increment ID
+    # Atomic counter for auto-increment IDs — a special item with id=0 holds
+    # the counter. DynamoDB ADD atomically increments it and returns the new value.
+    # The id=0 item is filtered out in _dynamo_load_all() and _dynamo_get().
     resp = table.update_item(
         Key={"id": 0},
         UpdateExpression="ADD #c :inc",
@@ -174,13 +176,13 @@ def _dynamo_load_all() -> list[dict]:
     table = _get_table()
     resp = table.scan()
     items = resp.get("Items", [])
-    # Filter out the counter item and sort by id
+    # Filter out the counter item (id=0, see _dynamo_save) and sort by id
     entries = []
     for item in items:
         if item["id"] == 0:
             continue
         item["trigger"] = item.pop("trigger_text", None) or None
-        # Backfill for older entries
+        # Backfill fields added after initial schema (reward_format in v1.3, rarity in v1.4)
         if "reward_format" not in item:
             item["reward_format"] = classify_reward(item.get("reward", ""))
         if "rarity" not in item:
