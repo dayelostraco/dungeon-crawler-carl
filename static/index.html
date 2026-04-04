@@ -88,6 +88,24 @@
       animation: fadeIn 0.4s ease-out;
     }
     .card.visible { display: block; }
+
+    /* Rarity tier border colors */
+    .card.rarity-bronze { border-color: #cd7f32; }
+    .card.rarity-silver { border-color: #c0c0c0; }
+    .card.rarity-gold { border-color: #f0c040; box-shadow: 0 0 12px rgba(240, 192, 64, 0.3); }
+    .card.rarity-legendary { border-color: #ff6ec7; box-shadow: 0 0 20px rgba(255, 110, 199, 0.4); }
+
+    .rarity-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: bold;
+      margin-left: 0.6rem;
+    }
+    .rarity-bronze .rarity-label { color: #cd7f32; }
+    .rarity-silver .rarity-label { color: #c0c0c0; }
+    .rarity-gold .rarity-label { color: #f0c040; }
+    .rarity-legendary .rarity-label { color: #ff6ec7; }
     @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
     .card-header {
@@ -193,6 +211,16 @@
       flex-shrink: 0;
     }
     .history-item .title { color: #f0c040; font-size: 0.85rem; flex: 1; }
+    .history-rarity {
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .history-rarity.r-bronze { background: #cd7f32; }
+    .history-rarity.r-silver { background: #c0c0c0; }
+    .history-rarity.r-gold { background: #f0c040; }
+    .history-rarity.r-legendary { background: #ff6ec7; }
     .history-date { color: #555; font-size: 0.7rem; white-space: nowrap; }
     .history-item .trigger { color: #666; font-size: 0.7rem; margin-top: 0.15rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .history-empty { color: #555; font-size: 0.85rem; font-style: italic; }
@@ -247,7 +275,7 @@
 
   <div class="card" id="card">
     <div class="card-top-row">
-      <div class="card-header">Achievement Unlocked</div>
+      <div><span class="card-header">Achievement Unlocked</span><span class="rarity-label" id="cardRarity"></span></div>
       <div class="card-date" id="cardDate"></div>
     </div>
     <div class="card-trigger" id="cardTrigger"></div>
@@ -323,11 +351,20 @@
       return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
 
+    const RARITY_CLASSES = ['rarity-bronze', 'rarity-silver', 'rarity-gold', 'rarity-legendary'];
+
     function showCard(data) {
       currentAchievementId = data.id;
       pendingAudioUrls = null;
       document.getElementById('playBtn').style.display = 'none';
       document.getElementById('cardDate').textContent = formatDate(data.timestamp);
+
+      /* Rarity tier */
+      const card = document.getElementById('card');
+      RARITY_CLASSES.forEach(c => card.classList.remove(c));
+      const rarity = data.rarity || 'bronze';
+      card.classList.add('rarity-' + rarity);
+      document.getElementById('cardRarity').textContent = rarity;
       const badgeEl = document.getElementById('cardBadge');
       if (data.badge) {
         badgeEl.src = `/static/badges/${data.badge}.svg`;
@@ -347,7 +384,6 @@
       document.getElementById('cardDesc').textContent = stripAnnouncerTags(data.description);
       document.getElementById('cardReward').textContent = data.reward;
       document.getElementById('cardActions').style.display = data.id ? 'block' : 'none';
-      const card = document.getElementById('card');
       card.classList.remove('visible');
       void card.offsetWidth; /* reset animation */
       card.classList.add('visible');
@@ -507,6 +543,7 @@
         let html = data.items.map(e => `
           <div class="history-item" onclick="handleReplay(${e.id})">
             <div class="history-top-row">
+              <span class="history-rarity r-${e.rarity || 'bronze'}"></span>
               ${e.badge ? `<img class="history-badge" src="/static/badges/${e.badge}.svg" alt="">` : ''}
               <span class="title">${e.title}</span>
               <span class="history-date">${formatDate(e.timestamp)}</span>
@@ -577,6 +614,31 @@
         console.error('Deep link failed', err);
       }
     }
+
+    /* Random trigger suggestions — rotates placeholder text on each page load */
+    const SUGGESTIONS = [
+      'took a 2 hour lunch and nobody noticed',
+      'mass-deleted a production database',
+      'replied-all to the entire company',
+      'pushed to prod on a Friday at 4:59pm',
+      'fell asleep in a meeting with my camera on',
+      'forgot to mute and said something regrettable',
+      'spent 3 hours debugging a typo',
+      'accidentally emailed my resume to my boss',
+      'showed up to the wrong meeting and stayed anyway',
+      'broke the build right before a demo',
+      'ate someone else\'s lunch from the fridge',
+      'automated my job and told no one',
+      'got locked out of every account on the same day',
+      'merged to main without reading the diff',
+      'spent an hour writing a message then deleted it',
+      'said "let\'s circle back" and meant it',
+      'googled something I should definitely already know',
+      'created a Jira ticket to track creating Jira tickets',
+      'survived a meeting that could have been an email',
+      'deployed on a Friday and it actually worked',
+    ];
+    triggerInput.placeholder = 'e.g. ' + SUGGESTIONS[Math.floor(Math.random() * SUGGESTIONS.length)];
 
     /* load history on page load, then check for deep link */
     loadHistory();

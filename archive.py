@@ -46,6 +46,8 @@ def _get_db() -> sqlite3.Connection:
             conn.execute("ALTER TABLE achievements ADD COLUMN badge TEXT")
         with contextlib.suppress(Exception):
             conn.execute("ALTER TABLE achievements ADD COLUMN reward_format TEXT")
+        with contextlib.suppress(Exception):
+            conn.execute("ALTER TABLE achievements ADD COLUMN rarity TEXT DEFAULT 'bronze'")
         conn.commit()
         _DB_INIT = True
     return conn
@@ -57,6 +59,7 @@ def _row_to_dict(row: sqlite3.Row) -> dict:
         "timestamp": row["timestamp"],
         "title": row["title"],
         "badge": row["badge"],
+        "rarity": row["rarity"] or "bronze",
         "description": row["description"],
         "reward": row["reward"],
         "reward_format": row["reward_format"],
@@ -69,13 +72,15 @@ def _local_save(achievement: dict, trigger: str | None, audio_files: list[str] |
     conn = _get_db()
     ts = datetime.now().isoformat()
     reward_format = classify_reward(achievement.get("reward", ""))
+    rarity = achievement.get("rarity", "bronze")
     cur = conn.execute(
-        "INSERT INTO achievements (timestamp, title, badge, description, reward, reward_format, trigger_text, audio_files) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO achievements (timestamp, title, badge, rarity, description, reward, reward_format, trigger_text, audio_files) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             ts,
             achievement.get("title", ""),
             achievement.get("badge"),
+            rarity,
             achievement.get("description", ""),
             achievement.get("reward", ""),
             reward_format,
@@ -89,6 +94,7 @@ def _local_save(achievement: dict, trigger: str | None, audio_files: list[str] |
         "timestamp": ts,
         "title": achievement.get("title", ""),
         "badge": achievement.get("badge"),
+        "rarity": rarity,
         "description": achievement.get("description", ""),
         "reward": achievement.get("reward", ""),
         "reward_format": reward_format,
@@ -150,6 +156,7 @@ def _dynamo_save(achievement: dict, trigger: str | None, audio_files: list[str] 
         "timestamp": ts,
         "title": achievement.get("title", ""),
         "badge": achievement.get("badge", ""),
+        "rarity": achievement.get("rarity", "bronze"),
         "description": achievement.get("description", ""),
         "reward": achievement.get("reward", ""),
         "reward_format": reward_format,
@@ -173,9 +180,11 @@ def _dynamo_load_all() -> list[dict]:
         if item["id"] == 0:
             continue
         item["trigger"] = item.pop("trigger_text", None) or None
-        # Backfill reward_format for older entries
+        # Backfill for older entries
         if "reward_format" not in item:
             item["reward_format"] = classify_reward(item.get("reward", ""))
+        if "rarity" not in item:
+            item["rarity"] = "bronze"
         entries.append(item)
     return sorted(entries, key=lambda x: x["id"])
 
@@ -189,6 +198,8 @@ def _dynamo_get(entry_id: int) -> dict | None:
     item["trigger"] = item.pop("trigger_text", None) or None
     if "reward_format" not in item:
         item["reward_format"] = classify_reward(item.get("reward", ""))
+    if "rarity" not in item:
+        item["rarity"] = "bronze"
     return item
 
 
