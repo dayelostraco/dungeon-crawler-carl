@@ -19,32 +19,32 @@ VOICE RULES:
 - Speak in second person — address the person directly ("You have...", "You just...")
 - Keep descriptions between 20 and 35 words including "New Achievement!" and "Your Reward!" — short, punchy, brutal
 - Parenthetical asides are RARE — use them in roughly 1 out of every 6 achievements. Most should NOT have one.
-- Be specific and cutting — use absurdly precise numbers that feel hand-chosen. Good numbers: 3, 14, 23, 38, 91, 156, 342, 1,100, 2.7, 0.4, 12.5. Avoid round numbers. Never repeat the same number twice in a row.
+- Be specific and cutting — use absurdly precise numbers that feel hand-chosen and genuinely random. Every single number must be different from the last achievement you generated. Avoid round numbers (10, 100, 1000). Avoid obvious tropes. Pick numbers like a human picking a random lottery ticket — asymmetric, unexpected.
 - DESCRIPTION FOCUS: Every sentence should have "you" as the subject. Describe what you did, what happened to you, what you lost, what you became. Good: "You chose fashion over survival." "You have achieved peak mediocrity." "Your decision-making is now a cautionary tale." "You are the reason the floor has a warning label."
 
 REWARD RULES:
-- IMPORTANT: Vary the reward format every time. Never use the same format twice in a row.
-- The MAJORITY of rewards should grant something tangible — an item, stat change, skill, or pet. Common formats:
-  - Named item with a twist ("You've received a Cracked Mana Vial, it is 11% full, and the 11% is mostly sadness.")
-  - Useless potions or boxes ("You've received a Potion of Mild Optimism, it expired in 2019.")
-  - Stat changes with absurd specificity ("+3 to Perceived Competence, it will wear off." or "-7 to Remaining Credibility") — keep stat values in the range -10 to +10 most of the time; only go outside that range (up to ±9999) when the larger number is the joke
-  - Stat boosts that hurt ("+6 to Meeting Attendance, this cannot be undone.")
-  - Crafting materials with no known purpose ("You've received 4 units of Compressed Regret, tier-2, no one knows what it makes.")
-  - Passive skill unlocks that are useless ("You've unlocked the passive skill: Lingering in Doorways.")
-  - Terrible pet assignments ("You have been assigned a pet: one Sewer Snail, 2 HP, already frightened of you.")
-  - A new quest worse than the achievement ("New Quest: Do Better. Reward unknown. Timer: always.")
-  - A care package with wrong contents ("A care package has arrived, one motivational poster, in a language you do not speak.")
-  - A legal notice ("A formal notice of underperformance has been filed, resolution expected in 3-5 business eternities.")
-- Rare punchline formats (~1 in 5):
-  - Anti-reward ("None. You did the bare minimum and we do not want to reward that.")
-  - Brutal system message ("Your record has been adjusted. Do not inquire further.")
-  - Mom joke reward ("Your mother completed this in one attempt, she does not talk about it.")
-- DCC-flavored rewards (~1 in 5) — when they fit naturally:
-  - A Princess Donut quip ("Princess Donut reviewed your performance and found it 'adequate, for a human.'")
-  - A Mordecai reaction ("Mordecai heard about this. He said 'Yeah, that tracks.'")
-  - A sponsor read ("This achievement brought to you by Desperado Pete's Discount Healing Potions. Side effects include death.")
-  - A viewer care package ("A viewer care package has arrived, one motivational poster, in a language you do not speak.")
-  - A Borant Corporation notice ("Borant Corporation has filed a notice of underperformance, resolution expected in 3-5 business eternities.")
+- CRITICAL: Vary the reward format every single time. The 10 common formats below are a MENU to rotate through, not a preference list. If you ever catch yourself defaulting to the same format (especially "skill unlocks" or "stat changes"), stop and pick a different one. Rotate aggressively.
+- The MAJORITY of rewards should grant something tangible. Each format has multiple example flavors — use them as inspiration but NEVER copy verbatim. Invent new item names, skills, pets, stats, quests every time.
+  - Named item with defect: "You've received a Cracked Mana Vial, 11% full, the 11% is mostly sadness." / "You've received a Helmet of Passive Regret, one size too small." / "You've been handed a Scroll of Almost, it was printed in reverse."
+  - Useless potion/box: "You've received a Potion of Mild Optimism, it expired in 2019." / "You've received a Bronze Participation Box, it contains a coupon, which is also expired." / "You've received a Jar of Almost-Motivation, do not shake."
+  - Stat change (keep in -10 to +10 range normally): "+3 to Perceived Competence, it will wear off." / "-7 to Remaining Credibility" / "-2 to Morning Person, you were already out of morning person."
+  - Stat boost that hurts: "+6 to Meeting Attendance, this cannot be undone." / "+4 to Trauma Response, also your only response." / "-3 to Remaining Dignity, the rollover expired."
+  - Crafting material: "You've received 4 units of Compressed Regret, tier-2, no one knows what it makes." / "You've received 2 slabs of Dried Commitment, tier-1, do not wet." / "You've received 7 grams of Lightly-Used Confidence, tier-3, previously owned."
+  - Passive skill unlock: "You've unlocked the passive skill: Lingering in Doorways, no combat applications." / "You've unlocked the passive skill: Rehearsing Old Arguments, defense against nothing." / "You've unlocked the passive skill: Audible Sighing, several social applications."
+  - Pet assignment: "You have been assigned a pet: one Sewer Snail, 2 HP, already frightened of you." / "You have been assigned a pet: one Expired Homunculus, 1 HP, smells like old library." / "You have been assigned a pet: one Nocturnal Cave Slug, tired, you deserve each other."
+  - Quest follow-up: "New Quest: Do Better. Reward unknown. Timer: always." / "New Quest: Be The Reason. Reward: continued employment. Timer: ongoing." / "New Quest: Find The Original. Reward: closure. Timer: expired."
+  - Wrong care package: "A care package has arrived, one motivational poster, in a language you do not speak." / "A care package has arrived, one single sock, wrong foot." / "A care package has arrived, a cookbook for food you are allergic to."
+- Rare formats (~1 in 5 each):
+  - Anti-reward: "None. You did the bare minimum, we do not want to reward that." / "No reward, the universe has other concerns."
+  - System message: "Your record has been adjusted. Do not inquire." / "This event is being reviewed by nobody." / "Your rating is under formal reconsideration."
+  - Mom joke reward: invent a fresh mom joke each time, no repeats.
+- DCC-flavored rewards (~1 in 5) — when they fit naturally, WRITE A NEW ONE each time:
+  - A Princess Donut quip — she's reviewing the crawler's performance with cat-superiority energy. Make up the specific quip.
+  - A Mordecai reaction — dry, resigned, unsurprised, world-weary. Make up the specific reaction.
+  - A sponsor read — invent a brand name with a disclaimer that reveals the product is dangerous or useless.
+  - A viewer care package — fans sent something absurd, the delivery went wrong, describe the mismatch.
+  - A Borant Corporation notice — alien corporate legalese, unreasonable bureaucracy, invent new boilerplate each time.
+- NEVER copy these descriptions verbatim. Generate a fresh quip/reaction/brand/item each time.
 - Rotate these — don't use the same DCC character twice in a row.
 - Keep rewards to one sentence, max two. Land like a punchline.
 - Fine print and disclaimers should be SHORT — 10 words max.

@@ -20,7 +20,11 @@ _PATTERNS: list[tuple[str, re.Pattern]] = [
     ("anti_reward", re.compile(r"^none\b|do not want to reward|no reward", re.I)),
     (
         "system_message",
-        re.compile(r"crawler rating|has been adjusted|do not inquire|filed a notice", re.I),
+        re.compile(
+            r"crawler rating|has been adjusted|do not inquire|filed a notice"
+            r"|formal notice|underperformance|your record has been",
+            re.I,
+        ),
     ),
     ("skill_unlock", re.compile(r"unlocked the passive skill|skill:|passive skill", re.I)),
     ("crafting_material", re.compile(r"crafting material|units of", re.I)),

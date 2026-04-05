@@ -36,15 +36,49 @@ def extract_numbers(text: str) -> list[int]:
     return [int(n) for n in re.findall(r"\b\d+\b", text)]
 
 
+TEST_TRIGGERS = [
+    "spilled coffee on my keyboard",
+    "ate someone's lunch from the fridge",
+    "stayed up until 4am watching videos",
+    "broke the build before a demo",
+    "replied-all to the entire company",
+    "forgot to mute on a zoom call",
+    "showed up to the wrong meeting",
+    "mass-deleted rows in production",
+    "convinced the team to use a made-up framework",
+    "got promoted for fixing my own bug",
+    "took down production for 45 minutes",
+    "deleted the staging environment",
+    "avoided standup for a whole week",
+    "got fired and rehired in the same meeting",
+    "automated my own job quietly",
+    "pushed to main without code review",
+    "gave a demo without having built the feature",
+    "accepted a meeting invite from a stranger",
+    "renamed a critical database table mid-deploy",
+    "merged a PR without reading any of it",
+    "took credit for work I did not do",
+    "accidentally sent a private message publicly",
+    "scheduled a meeting during everyone else's lunch",
+    "used a production API key in a test",
+]
+
+
 def generate_samples(count: int) -> list[dict]:
-    """Generate fresh achievements via the Claude API."""
+    """Generate fresh achievements via the Claude API using varied triggers.
+
+    Using the same trigger N times causes any model to cluster on one
+    reward format. Varying triggers more closely matches production usage
+    where each call has a different input.
+    """
     from generator import generate
 
     samples = []
     for i in range(count):
-        print(f"  Generating {i + 1}/{count}...", flush=True)
+        trigger = TEST_TRIGGERS[i % len(TEST_TRIGGERS)]
+        print(f"  Generating {i + 1}/{count}: {trigger[:40]}...", flush=True)
         try:
-            samples.append(generate())
+            samples.append(generate(trigger=trigger))
         except Exception as e:
             print(f"  WARNING: Generation {i + 1} failed: {e}")
     return samples
