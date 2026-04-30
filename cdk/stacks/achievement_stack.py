@@ -14,6 +14,9 @@ from aws_cdk import (
     aws_cloudfront_origins as origins,
 )
 from aws_cdk import (
+    aws_cloudwatch as cloudwatch,
+)
+from aws_cdk import (
     aws_dynamodb as dynamodb,
 )
 from aws_cdk import (
@@ -43,12 +46,28 @@ from aws_cdk import (
 from aws_cdk import (
     aws_secretsmanager as secretsmanager,
 )
+from aws_cdk import (
+    aws_sns as sns,
+)
 from constructs import Construct
 
 
 class AchievementStack(Stack):
-    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
+    def __init__(
+        self,
+        scope: Construct,
+        construct_id: str,
+        *,
+        mode: str = "prod",
+        domain_name: str | None = None,
+        hosted_zone_name: str | None = None,
+        **kwargs,
+    ) -> None:
         super().__init__(scope, construct_id, **kwargs)
+
+        is_ephemeral = mode == "ephemeral"
+        data_removal_policy = RemovalPolicy.DESTROY if is_ephemeral else RemovalPolicy.RETAIN
+        use_custom_domain = bool(domain_name and hosted_zone_name)
 
         # --- VPC ---
         # No NAT gateway — tasks run in public subnets with public IPs.
@@ -75,38 +94,40 @@ class AchievementStack(Stack):
         )
         vpc.add_gateway_endpoint("S3Endpoint", service=ec2.GatewayVpcEndpointAwsService.S3)
 
-        # --- DNS + TLS ---
-        domain_name = "crawl.sigilark.com"
-
-        hosted_zone = route53.HostedZone.from_lookup(
-            self,
-            "Zone",
-            domain_name="sigilark.com",
-        )
-
-        certificate = acm.Certificate(
-            self,
-            "Cert",
-            domain_name=domain_name,
-            validation=acm.CertificateValidation.from_dns(hosted_zone),
-        )
+        # --- DNS + TLS (only when a custom domain is configured) ---
+        hosted_zone = None
+        certificate = None
+        if use_custom_domain:
+            hosted_zone = route53.HostedZone.from_lookup(
+                self,
+                "Zone",
+                domain_name=hosted_zone_name,
+            )
+            certificate = acm.Certificate(
+                self,
+                "Cert",
+                domain_name=domain_name,
+                validation=acm.CertificateValidation.from_dns(hosted_zone),
+            )
 
         # --- DynamoDB ---
+        # Hardcoded table name only in prod (preserves the live `achievements`
+        # table). Ephemeral lets CDK auto-name so multiple stacks can coexist.
         table = dynamodb.Table(
             self,
             "AchievementsTable",
-            table_name="achievements",
+            table_name=None if is_ephemeral else "achievements",
             partition_key=dynamodb.Attribute(name="id", type=dynamodb.AttributeType.NUMBER),
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
-            removal_policy=RemovalPolicy.RETAIN,
+            removal_policy=data_removal_policy,
         )
 
         # --- S3 ---
         bucket = s3.Bucket(
             self,
             "AudioBucket",
-            removal_policy=RemovalPolicy.RETAIN,
-            auto_delete_objects=False,
+            removal_policy=data_removal_policy,
+            auto_delete_objects=is_ephemeral,
             lifecycle_rules=[
                 s3.LifecycleRule(
                     transitions=[
@@ -131,22 +152,49 @@ class AchievementStack(Stack):
             ),
         )
 
-        # --- Secrets Manager (pre-created, referenced by name) ---
-        anthropic_secret = secretsmanager.Secret.from_secret_name_v2(
-            self,
-            "AnthropicKey",
-            "achievement-intercom/anthropic-api-key",
-        )
-        elevenlabs_secret = secretsmanager.Secret.from_secret_name_v2(
-            self,
-            "ElevenLabsKey",
-            "achievement-intercom/elevenlabs-api-key",
-        )
-        elevenlabs_voice_secret = secretsmanager.Secret.from_secret_name_v2(
-            self,
-            "ElevenLabsVoice",
-            "achievement-intercom/elevenlabs-voice-id",
-        )
+        # --- Secrets ---
+        # Prod: reference pre-existing secrets by name (must be created first
+        # via `make bootstrap` or `make set-secrets`).
+        # Ephemeral: CDK creates fresh secrets with placeholder values that
+        # the user updates post-deploy via `make set-secrets-ephemeral`.
+        if is_ephemeral:
+            anthropic_secret = secretsmanager.Secret(
+                self,
+                "AnthropicKey",
+                description="Anthropic API key (placeholder — set after deploy)",
+                secret_string_value=cdk.SecretValue.unsafe_plain_text("placeholder"),
+                removal_policy=RemovalPolicy.DESTROY,
+            )
+            elevenlabs_secret = secretsmanager.Secret(
+                self,
+                "ElevenLabsKey",
+                description="ElevenLabs API key (placeholder)",
+                secret_string_value=cdk.SecretValue.unsafe_plain_text("placeholder"),
+                removal_policy=RemovalPolicy.DESTROY,
+            )
+            elevenlabs_voice_secret = secretsmanager.Secret(
+                self,
+                "ElevenLabsVoice",
+                description="ElevenLabs voice ID (placeholder)",
+                secret_string_value=cdk.SecretValue.unsafe_plain_text("placeholder"),
+                removal_policy=RemovalPolicy.DESTROY,
+            )
+        else:
+            anthropic_secret = secretsmanager.Secret.from_secret_name_v2(
+                self,
+                "AnthropicKey",
+                "achievement-intercom/anthropic-api-key",
+            )
+            elevenlabs_secret = secretsmanager.Secret.from_secret_name_v2(
+                self,
+                "ElevenLabsKey",
+                "achievement-intercom/elevenlabs-api-key",
+            )
+            elevenlabs_voice_secret = secretsmanager.Secret.from_secret_name_v2(
+                self,
+                "ElevenLabsVoice",
+                "achievement-intercom/elevenlabs-voice-id",
+            )
 
         # --- Docker Image ---
         image_asset = ecr_assets.DockerImageAsset(
@@ -238,53 +286,68 @@ class AchievementStack(Stack):
             platform_version=ecs.FargatePlatformVersion.LATEST,
         )
 
-        # HTTP → HTTPS redirect
-        alb.add_listener(
-            "HttpRedirect",
-            port=80,
-            default_action=elbv2.ListenerAction.redirect(
-                protocol="HTTPS",
-                port="443",
-                permanent=True,
-            ),
+        health_check = elbv2.HealthCheck(
+            path="/health",
+            interval=Duration.seconds(30),
+            timeout=Duration.seconds(5),
+            healthy_threshold_count=2,
+            unhealthy_threshold_count=3,
         )
 
-        # HTTPS listener
-        https_listener = alb.add_listener(
-            "HttpsListener",
-            port=443,
-            certificates=[certificate],
-        )
-        https_listener.add_targets(
-            "EcsTarget",
-            port=8000,
-            targets=[service],
-            health_check=elbv2.HealthCheck(
-                path="/health",
-                interval=Duration.seconds(30),
-                timeout=Duration.seconds(5),
-                healthy_threshold_count=2,
-                unhealthy_threshold_count=3,
-            ),
-        )
+        if certificate is not None:
+            # HTTP → HTTPS redirect
+            alb.add_listener(
+                "HttpRedirect",
+                port=80,
+                default_action=elbv2.ListenerAction.redirect(
+                    protocol="HTTPS",
+                    port="443",
+                    permanent=True,
+                ),
+            )
+            # HTTPS listener with cert
+            https_listener = alb.add_listener(
+                "HttpsListener",
+                port=443,
+                certificates=[certificate],
+            )
+            https_listener.add_targets(
+                "EcsTarget",
+                port=8000,
+                targets=[service],
+                health_check=health_check,
+            )
+        else:
+            # No cert / no custom domain — HTTP only.
+            http_listener = alb.add_listener("HttpListener", port=80)
+            http_listener.add_targets(
+                "EcsTarget",
+                port=8000,
+                targets=[service],
+                health_check=health_check,
+            )
 
         # --- DNS Record ---
-        route53.ARecord(
-            self,
-            "DnsRecord",
-            zone=hosted_zone,
-            record_name="crawl",
-            target=route53.RecordTarget.from_alias(targets.LoadBalancerTarget(alb)),
-        )
+        if use_custom_domain and hosted_zone is not None:
+            route53.ARecord(
+                self,
+                "DnsRecord",
+                zone=hosted_zone,
+                record_name=domain_name.split(".")[0],
+                target=route53.RecordTarget.from_alias(targets.LoadBalancerTarget(alb)),
+            )
 
         # --- CloudWatch Dashboard ---
-        from aws_cdk import aws_cloudwatch as cloudwatch
-        from aws_cdk import aws_sns as sns
-
+        # Suffix the dashboard name in ephemeral so it doesn't collide with prod.
+        dashboard_name = (
+            "CrawlLog-Operations"
+            if not is_ephemeral
+            else f"CrawlLog-Operations-{construct_id}"
+        )
         dashboard = cloudwatch.Dashboard(
             self,
             "OperationsDashboard",
-            dashboard_name="CrawlLog-Operations",
+            dashboard_name=dashboard_name,
         )
 
         # API latency — ALB target response time
@@ -395,29 +458,39 @@ class AchievementStack(Stack):
             ),
         )
 
-        # --- Billing Alarm ---
-        # Alert if monthly spend exceeds $75 (normal is ~$42)
-
-        sns.Topic(self, "BillingAlertTopic")
-        cloudwatch.Alarm(
-            self,
-            "BillingAlarm",
-            metric=cloudwatch.Metric(
-                namespace="AWS/Billing",
-                metric_name="EstimatedCharges",
-                dimensions_map={"Currency": "USD"},
-                statistic="Maximum",
-                period=Duration.hours(6),
-            ),
-            threshold=75,
-            evaluation_periods=1,
-            comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
-            alarm_description="Monthly AWS spend exceeded $75",
-        )
+        # --- Billing Alarm (prod only — account-wide signal) ---
+        if not is_ephemeral:
+            sns.Topic(self, "BillingAlertTopic")
+            cloudwatch.Alarm(
+                self,
+                "BillingAlarm",
+                metric=cloudwatch.Metric(
+                    namespace="AWS/Billing",
+                    metric_name="EstimatedCharges",
+                    dimensions_map={"Currency": "USD"},
+                    statistic="Maximum",
+                    period=Duration.hours(6),
+                ),
+                threshold=75,
+                evaluation_periods=1,
+                comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
+                alarm_description="Monthly AWS spend exceeded $75",
+            )
 
         # --- Outputs ---
-        cdk.CfnOutput(self, "Url", value=f"https://{domain_name}")
+        if use_custom_domain:
+            cdk.CfnOutput(self, "Url", value=f"https://{domain_name}")
+        else:
+            cdk.CfnOutput(self, "Url", value=f"http://{alb.load_balancer_dns_name}")
         cdk.CfnOutput(self, "TableName", value=table.table_name)
         cdk.CfnOutput(self, "BucketName", value=bucket.bucket_name)
         cdk.CfnOutput(self, "CdnDomain", value=cdn.distribution_domain_name)
         cdk.CfnOutput(self, "AlbDns", value=alb.load_balancer_dns_name)
+        if is_ephemeral:
+            cdk.CfnOutput(self, "AnthropicSecretArn", value=anthropic_secret.secret_arn)
+            cdk.CfnOutput(self, "ElevenLabsSecretArn", value=elevenlabs_secret.secret_arn)
+            cdk.CfnOutput(
+                self, "ElevenLabsVoiceSecretArn", value=elevenlabs_voice_secret.secret_arn
+            )
+            cdk.CfnOutput(self, "ServiceName", value=service.service_name)
+            cdk.CfnOutput(self, "ClusterName", value=cluster.cluster_name)
